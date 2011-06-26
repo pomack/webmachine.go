@@ -2,7 +2,6 @@ package webmachine
 
 import (
   "container/list"
-  "http"
   "io"
   "log"
   "strconv"
@@ -94,7 +93,7 @@ func (p *PassThroughMediaTypeHandler) splitRangeHeaderString(rangeHeader string)
   return theranges
 }
 
-func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp http.ResponseWriter) {
+func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
   if req.Header().Get("Accept-Ranges") == "bytes" {
     rangeHeader := req.Header().Get("Range")
     if len(rangeHeader) > 6 && rangeHeader[0:6] == "bytes=" {

@@ -1,7 +1,6 @@
 package webmachine
 
 import (
-  "http"
   "io"
   "log"
   "path/filepath"
@@ -188,7 +187,7 @@ func (p *FileResource) GenerateContext(req Request, cxt Context) (FileResourceCo
   return NewFileResourceContextWithPath(fullPath)
 }
 
-func (p *FileResource) HandlerFor(req Request, writer http.ResponseWriter) RequestHandler {
+func (p *FileResource) HandlerFor(req Request, writer ResponseWriter) RequestHandler {
   path := req.URL().Path
   if path >= p.urlPathPrefix && path[0:len(p.urlPathPrefix)] == p.urlPathPrefix {
     return p
@@ -204,7 +203,7 @@ func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request
 
 func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
-  return frc.Exists() && frc.IsFile(), req, frc, 0, nil
+  return frc.Exists() && (frc.IsFile() || frc.IsDir()), req, frc, 0, nil
 }
 
 func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, os.Error) {
@@ -283,13 +282,18 @@ func (p *FileResource) ProcessPost(req Request, cxt Context) (bool, Request, Con
 
 func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
-  extension := filepath.Ext(frc.FullPath())
-  mediaType := mime.TypeByExtension(extension)
-  if len(mediaType) == 0 {
-    // default to text/plain
-    mediaType = "text/plain"
+  var arr []MediaTypeHandler
+  if frc.IsDir() {
+    arr = []MediaTypeHandler{NewJsonDirectoryListing(frc.FullPath(), req.URL().Path), NewHtmlDirectoryListing(frc.FullPath(), req.URL().Path)}
+  } else {
+    extension := filepath.Ext(frc.FullPath())
+    mediaType := mime.TypeByExtension(extension)
+    if len(mediaType) == 0 {
+      // default to text/plain
+      mediaType = "text/plain"
+    }
+    arr = []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, frc, frc.Len(), frc.LastModified())}
   }
-  arr := []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, frc, frc.Len(), frc.LastModified())}
   return arr, req, cxt, 0, nil
 }
 /*

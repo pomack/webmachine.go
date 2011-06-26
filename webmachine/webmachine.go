@@ -25,12 +25,14 @@ func (p *webMachine) RemoveRouteHandler(handler RouteHandler) {
 
 func (p *webMachine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
   r := NewRequestFromHttpRequest(req)
+  rs := NewResponseWriter(resp)
   log.Print("running URL: ", r.URL().Path, "\n")
   for _, h := range p.routeHandlers {
     rh := h.(RouteHandler)
-    if handler := rh.HandlerFor(r, resp); handler != nil {
+    
+    if handler := rh.HandlerFor(r, rs); handler != nil {
       log.Print("found route handler for: ", r.URL().Path, " ", handler, "\n")
-      handleRequest(handler, r, NewResponseWriter(resp))
+      handleRequest(handler, r, rs)
       return
     }
   }

@@ -18,7 +18,7 @@ import (
 
 type wmDecisionCore struct {
   req Request
-  resp http.ResponseWriter
+  resp ResponseWriter
   cxt Context
   handler RequestHandler
   currentDecisionId WMDecision
@@ -36,7 +36,7 @@ type wmDecisionCore struct {
   decisions vector.IntVector
 }
 
-func handleRequest(handler RequestHandler, req Request, resp http.ResponseWriter) {
+func handleRequest(handler RequestHandler, req Request, resp ResponseWriter) {
   d := &wmDecisionCore{req: req, resp: resp, handler: handler, currentDecisionId: v3b13}
   log.Print("[WM] Handling request for: ", req.Method(), " ", req.URL().Path, "\n")
   /*
@@ -380,6 +380,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
     mediaTypesProvided[i] = mth.MediaType()
   }
   bestMatch := chooseMediaType(mediaTypesProvided, arr[0])
+  log.Print("[WDC]: Chose Media Type \"", bestMatch, "\" with accept ", arr, " and provided ", mediaTypesProvided)
   if len(bestMatch) > 0 {
     mediaType := bestMatch
     p.resp.Header().Set("Content-Type", mediaType)
@@ -510,11 +511,18 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
 
 // Acceptable Encoding available?
 func (p *wmDecisionCore) doV3f7() WMDecision {
+  if len(p.chooseEncoding()) == 0 {
+    p.resp.WriteHeader(406)
+    return wmResponded
+  }
+  return v3g7
+  /*
   arr, _ := p.req.Header()["Accept-Encoding"]
   var handlers []EncodingHandler
   var httpCode int
   var httpError os.Error
   handlers, p.req, p.cxt, httpCode, httpError = p.handler.EncodingsProvided(arr, p.req, p.cxt)
+  log.Print("[WDC]: Accept-Encoding: \"", arr, "\" vs handlers: ", handlers)
   if len(handlers) > 0 {
     p.encodingOutputHandler = handlers[0]
     p.encoding = handlers[0].Encoding()
@@ -526,6 +534,7 @@ func (p *wmDecisionCore) doV3f7() WMDecision {
   }
   p.resp.WriteHeader(406)
   return wmResponded
+  */
 }
 
 // Resource exists?
@@ -1029,7 +1038,10 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
       p.resp.Header().Set("Expires", expires.Format(http.TimeFormat))
     }
     if p.mediaTypeOutputHandler != nil {
+      p.resp.WriteHeader(200)
       p.mediaTypeOutputHandler.OutputTo(p.req, p.cxt, p.resp, p.resp)
+      p.resp.Flush()
+      return wmResponded
     } else {
       var provided []MediaTypeHandler
       provided, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesProvided(p.req, p.cxt)
@@ -1174,7 +1186,8 @@ func (p *wmDecisionCore) chooseEncoding() string {
   arr := make([]string, 1)
   arr[0] = "*"
   encodingHandlers, p.req, p.cxt, _, _ = p.handler.EncodingsProvided(arr, p.req, p.cxt)
-  if len(encodingHandlers) <= 0 {
+  log.Print("[WDC]: chooseEncoding: ", encodingHandlers)
+  if len(encodingHandlers) == 0 {
     return ""
   }
   encodingMap := make(map[string]EncodingHandler)
@@ -1185,8 +1198,10 @@ func (p *wmDecisionCore) chooseEncoding() string {
   }
   s := p.req.Header().Get("Accept-Encoding")
   encoding := chooseEncodingWithDefaultString(encodings, s)
+  log.Print("[WDC]: Accept-Encoding: \"", s, "\", we supply ", encodings, " and choosing encoding \"", encoding, "\"")
   if len(encoding) > 0 {
     p.resp.Header().Set("Content-Encoding", encoding)
+    p.resp.AddEncoding(encodingMap[encoding], p.req, p.cxt)
     p.encodingOutputHandler = encodingMap[encoding]
   }
   return encoding

@@ -37,10 +37,6 @@ type Request interface {
   URLParts() []string
 }
 
-type responseWriter struct {
-  rw http.ResponseWriter
-}
-
 type Context interface {}
 
 type request struct {
@@ -50,12 +46,12 @@ type request struct {
 }
 
 type RouteHandler interface {
-  HandlerFor(Request, http.ResponseWriter) RequestHandler
+  HandlerFor(Request, ResponseWriter) RequestHandler
 }
 
 type MediaTypeHandler interface {
   MediaType() string
-  OutputTo(req Request, cxt Context, writer io.Writer, resp http.ResponseWriter)
+  OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter)
 }
 
 type CharsetHandler interface {

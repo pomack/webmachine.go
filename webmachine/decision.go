@@ -608,7 +608,7 @@ func (p *wmDecisionCore) doV3h10() WMDecision {
 func (p *wmDecisionCore) doV3h11() WMDecision {
   arr, _ := p.req.Header()["If-Unmodified-Since"]
   iumsDate := arr[0]
-  t, err := time.Parse(iumsDate, http.TimeFormat)
+  t, err := time.Parse(http.TimeFormat, iumsDate)
   p.unmodifiedSince = t
   if err == nil {
     return v3h12
@@ -627,6 +627,9 @@ func (p *wmDecisionCore) doV3h12() WMDecision {
     return wmResponded
   }
   t := p.unmodifiedSince
+  if t != nil && lastModified != nil {
+    log.Print("[WMC]: comparing Last-Modified internal: ", t.Seconds(), " vs. received from client ", lastModified.Seconds())
+  }
   if t != lastModified && t != nil && lastModified != nil && lastModified.Seconds() > t.Seconds() {
     p.resp.WriteHeader(412)
     return wmResponded
@@ -784,7 +787,7 @@ func (p *wmDecisionCore) doV3l13() WMDecision {
 func (p *wmDecisionCore) doV3l14() WMDecision {
   arr, _ := p.req.Header()["If-Modified-Since"]
   iumsDate := arr[0]
-  t, err := time.Parse(iumsDate, http.TimeFormat)
+  t, err := time.Parse(http.TimeFormat, iumsDate)
   p.modifiedSince = t
   if err == nil && t != nil {
     return v3l15

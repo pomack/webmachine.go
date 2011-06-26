@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html lang="en_US">
+  <head>
+    <title>{Tail} - Directory Listing</title>
+  </head>
+  <body>
+    <h1>{Tail}</h1>
+    <h4>{Path}</h4>
+    <p>{Message}</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Size</th>
+          <th>Last Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+        {.repeated section Entries}
+        <tr class="entry">
+          <td class="name"><a href="{Path}">{Filename}</a></td>
+          <td class="size">{Size}</td>
+          <td class="last_modified">{LastModified}</td>
+        </tr>
+        {.end}
+      </tbody>
+    </table>
+    <p>Last Modified: {LastModified}</p>
+  </body>
+</html>

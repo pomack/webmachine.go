@@ -37,6 +37,10 @@ type Request interface {
   URLParts() []string
 }
 
+type responseWriter struct {
+  rw http.ResponseWriter
+}
+
 type Context interface {}
 
 type request struct {

@@ -13,7 +13,7 @@ fi
 
 # Get list of directories from Makefile
 dirs=$(sed '1,/^DIRS=/d; /^$/,$d; s/\\//g' Makefile)
-dirs2=$(sed '1,/^DIRS=/d; /^$/,$d; s/\\//g' ${GOROOT_FINAL}/src/pkg/Makefile)
+dirs2=$(sed '1,/^DIRS=/d; /^$/,$d; s/\\//g' ${GOROOT}/src/pkg/Makefile)
 dirpat=$(echo $dirs $dirs2 | sed 's/ /|/g; s/.*/^(&)$/')
 
 for dir in $dirs; do (
@@ -35,7 +35,7 @@ for dir in $dirs; do (
 ) done > $TMP
 
 for dir in $dirs2; do (
-  echo $dir.install: \${GOROOT_FINAL}/pkg/\${GOOS}_\${GOARCH}/${dir}.a
+  echo $dir.install: \${GOROOT}/pkg/\${GOOS}_\${GOARCH}/${dir}.a
 ) done >> $TMP
 
 mv $TMP $OUT

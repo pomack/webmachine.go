@@ -1,5 +1,5 @@
 
-include $(GOROOT_FINAL)/src/Make.inc
+include $(GOROOT)/src/Make.inc
 
 all: install
 
@@ -12,7 +12,7 @@ DIRS=\
 
 -include ../Make.deps
 
-include $(GOROOT_FINAL)/src/Make.cmd
+include $(GOROOT)/src/Make.cmd
 
 check:
 	gomake test

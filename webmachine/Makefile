@@ -1,5 +1,5 @@
 
-include $(GOROOT_FINAL)/src/Make.inc
+include $(GOROOT)/src/Make.inc
 
 TARG=webmachine
 GOFILES=\
@@ -21,7 +21,7 @@ GOFILES=\
 
 DIRS=\
 
-include $(GOROOT_FINAL)/src/Make.pkg
+include $(GOROOT)/src/Make.pkg
 
 check:
 	gomake test

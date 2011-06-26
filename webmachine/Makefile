@@ -1,5 +1,5 @@
 
-include $(GOROOT)/src/Make.inc
+include $(GOROOT_FINAL)/src/Make.inc
 
 TARG=webmachine
 GOFILES=\
@@ -12,6 +12,7 @@ GOFILES=\
 	passthroughmediatypehandler.go\
 	request.go\
 	resource.go\
+	responsewriter.go\
 	types.go\
 	util.go\
 	webmachine.go\
@@ -19,7 +20,7 @@ GOFILES=\
 
 DIRS=\
 
-include $(GOROOT)/src/Make.pkg
+include $(GOROOT_FINAL)/src/Make.pkg
 
 check:
 	gomake test

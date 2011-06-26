@@ -30,7 +30,7 @@ func (p *webMachine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
     rh := h.(RouteHandler)
     if handler := rh.HandlerFor(r, resp); handler != nil {
       log.Print("found route handler for: ", r.URL().Path, " ", handler, "\n")
-      go handleRequest(handler, r, resp)
+      go handleRequest(handler, r, NewResponseWriter(resp))
       return
     }
   }

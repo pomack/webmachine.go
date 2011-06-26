@@ -1,8 +1,11 @@
 
-all: install
+include $(GOROOT)/src/Make.inc
+
+all: Make.deps install
 
 DIRS=\
 	webmachine/\
+	fileserver/\
 
 TEST=\
 	$(filter-out $(NOTEST),$(DIRS))
@@ -25,16 +28,27 @@ test.dirs: $(addsuffix .test, $(TEST))
 %.test:
 	+cd $* && gomake test
 
+%.check:
+	+cd $* && gomake check
+
 clean: clean.dirs
 
 install: install.dirs
 
 test:   test.dirs
 
+check:	check.dirs
+
 #nuke: nuke.dirs
 #   rm -rf "$(GOROOT)"/pkg/*
+
+echo-dirs:
+	@echo $(DIRS)
+
+Make.deps:
+	./deps.bash
 
 deps:
 	./deps.bash
 
--include Make.deps
+#-include Make.deps

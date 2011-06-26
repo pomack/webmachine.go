@@ -13,7 +13,6 @@ import (
 
 
 func NewPassThroughMediaTypeHandler(mediaType string, reader io.ReadCloser, numberOfBytes int64, lastModified *time.Time) *PassThroughMediaTypeHandler {
-  log.Print("Creating Pass Through Media Type Handler: ", mediaType, ", ", reader, ", ", numberOfBytes, ", ", lastModified, "\n")
   return &PassThroughMediaTypeHandler{
     mediaType: mediaType,
     reader: reader,

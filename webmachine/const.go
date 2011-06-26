@@ -1,5 +1,9 @@
 package webmachine
 
+import (
+  "template"
+)
+
 const (
   CONNECT = "CONNECT"
   DELETE = "DELETE"
@@ -11,7 +15,13 @@ const (
   TRACE = "TRACE"
 )
 
+const (
+  ISO_8601_DATETIME_FORMAT = "2006-01-02T03:04:05Z"
+)
+
 var ALL_METHODS []string
+var HTML_DIRECTORY_LISTING_ERROR_TEMPLATE *template.Template
+var HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE *template.Template
 
 type WMDecision int
 
@@ -92,6 +102,7 @@ func init() {
   defaultMimeTypes[".xml"] = "application/xml"
   defaultMimeTypes[".css"] = "text/css"
   defaultMimeTypes[".js"] = "application/x-javascript"
+  defaultMimeTypes[".json"] = "application/json"
   defaultMimeTypes[".jpg"] = "image/jpeg"
   defaultMimeTypes[".jpeg"] = "image/jpeg"
   defaultMimeTypes[".gif"] = "image/gif"
@@ -109,6 +120,9 @@ func init() {
   defaultMimeTypes[".txt"] = "text/plain"
   defaultMimeTypes[".text"] = "text/plain"
   defaultMimeTypes[".csv"] = "text/csv"
+  
+  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE = template.MustParseFile("templates/html/directory_listing/success.html", nil)
+  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE = template.MustParseFile("templates/html/directory_listing/error.html", nil)
 }
 
 func (p WMDecision) String() string {

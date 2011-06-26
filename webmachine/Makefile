@@ -7,6 +7,7 @@ GOFILES=\
 	chunked.go\
 	const.go\
 	decision.go\
+	directorylisting.go\
 	encoders.go\
 	file_resource.go\
 	passthroughmediatypehandler.go\

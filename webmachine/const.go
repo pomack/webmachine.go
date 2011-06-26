@@ -87,6 +87,11 @@ const (
 )
 
 
+const (
+  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>{Tail} - Directory Listing</title>\n  </head>\n  <body>\n    <h1>{Tail}</h1>\n    <h4>{Path}</h4>\n    <p>{Message}</p>\n    <table>\n      <thead>\n        <tr>\n          <th>Filename</th>\n          <th>Size</th>\n          <th>Last Modified</th>\n        </tr>\n      </thead>\n      <tbody>\n        {.repeated section Entries}\n        <tr class=\"entry\">\n          <td class=\"name\"><a href=\"{Path}\">{Filename}</a></td>\n          <td class=\"size\">{Size}</td>\n          <td class=\"last_modified\">{LastModified}</td>\n        </tr>\n        {.end}\n      </tbody>\n    </table>\n    <p>Last Modified: {LastModified}</p>\n  </body>\n</html>"
+  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>Error in Directory Listing</title>\n  </head>\n  <body>\n    <h1>Error in Directory Listing</h1>\n    <p>While accessing <code>{Path}</code></p>\n    <h4>Error</h4>\n    <p>{Message}</p>\n  </body>\n</html>"
+)
+
 var (
   defaultMimeTypes map[string]string
 )
@@ -121,8 +126,8 @@ func init() {
   defaultMimeTypes[".text"] = "text/plain"
   defaultMimeTypes[".csv"] = "text/csv"
   
-  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE = template.MustParseFile("templates/html/directory_listing/success.html", nil)
-  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE = template.MustParseFile("templates/html/directory_listing/error.html", nil)
+  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE = template.MustParse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING, nil)
+  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE = template.MustParse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING, nil)
 }
 
 func (p WMDecision) String() string {

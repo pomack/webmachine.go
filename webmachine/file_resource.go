@@ -16,6 +16,7 @@ type FileResource struct {
   dirPath string
   urlPathPrefix string
   allowWrite bool
+  allowDirectoryListing bool
 }
 
 type FileResourceContext interface {
@@ -175,8 +176,8 @@ func (p *fileResourceContext) Len() int64 {
 
 
 
-func NewFileResource(directoryPath, urlPathPrefix string, allowWrite bool) *FileResource {
-  return &FileResource{dirPath: directoryPath, urlPathPrefix: urlPathPrefix, allowWrite: allowWrite}
+func NewFileResource(directoryPath, urlPathPrefix string, allowWrite bool, allowDirectoryListing bool) *FileResource {
+  return &FileResource{dirPath: directoryPath, urlPathPrefix: urlPathPrefix, allowWrite: allowWrite, allowDirectoryListing: allowDirectoryListing}
 }
 
 func (p *FileResource) GenerateContext(req Request, cxt Context) (FileResourceContext) {
@@ -203,7 +204,15 @@ func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request
 
 func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
-  return frc.Exists() && (frc.IsFile() || frc.IsDir()), req, frc, 0, nil
+  if !frc.Exists() {
+    return false, req, frc, 0, nil
+  }
+  if frc.IsDir() {
+    if req.Method() == GET || req.Method() == HEAD {
+      return p.allowDirectoryListing, req, frc, 0, nil
+    }
+  }
+  return frc.IsFile(), req, frc, 0, nil
 }
 
 func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, os.Error) {

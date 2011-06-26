@@ -321,12 +321,12 @@ func (p *wmDecisionCore) doV3b3() WMDecision {
   var httpCode int
   var httpError os.Error
   if p.req.Method() == OPTIONS {
-    p.resp.WriteHeader(200)
     arr, p.req, p.cxt, httpCode, httpError = p.handler.Options(p.req, p.cxt)
     if httpCode > 0 {
       p.writeHaltOrError(httpCode, httpError)
       return wmResponded
     }
+    p.resp.WriteHeader(200)
     s := strings.Join(arr, ",")
     // TODO handle write error
     io.WriteString(p.resp, s)
@@ -379,9 +379,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
   for i, mth := range provided {
     mediaTypesProvided[i] = mth.MediaType()
   }
-  log.Print("ContentTypesProvided: Keep going 1\n")
   bestMatch := chooseMediaType(mediaTypesProvided, arr[0])
-  log.Print("ContentTypesProvided: Keep going 2\n")
   if len(bestMatch) > 0 {
     mediaType := bestMatch
     p.resp.Header().Set("Content-Type", mediaType)
@@ -396,10 +394,8 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
         break
       }
     }
-    log.Print("ContentTypesProvided: Returning v3d4 with ", p.mediaType, " ", p.charset, " ", p.mediaTypeOutputHandler, "\n")
     return v3d4
   }
-  log.Print("ContentTypesProvided: Returning 406\n")
   p.resp.WriteHeader(406)
   return wmResponded
 }
@@ -770,7 +766,9 @@ func (p *wmDecisionCore) doV3l7() WMDecision {
   if p.req.Method() == POST {
     return v3m7
   }
+  log.Print("Writing Header 404\n")
   p.resp.WriteHeader(404)
+  log.Print("Done Writing Header 404\n")
   return wmResponded
 }
 
@@ -936,6 +934,7 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
       return wmResponded
     }
     p.resp.WriteHeader(n)
+    log.Print("Wrote Header but may not return wmResponded in doV3n11()\n")
     p.encodeBodyIfSet()
   }
   var respIsRedirect bool

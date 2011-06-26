@@ -34,6 +34,10 @@ func (p *identityEncoding) Decoder(req Request, cxt Context, reader io.Reader) (
   return reader
 }
 
+func (p *identityEncoding) String() string {
+  return "identity"
+}
+
 
 func NewCompressEncoder() EncodingHandler {
   return new(compressEncoding)
@@ -49,6 +53,10 @@ func (p *compressEncoding) Encoder(req Request, cxt Context, writer io.Writer) (
 
 func (p *compressEncoding) Decoder(req Request, cxt Context, reader io.Reader) (io.Reader) {
   return lzw.NewReader(reader, lzw.LSB, 8)
+}
+
+func (p *compressEncoding) String() string {
+  return "compress"
 }
 
 func NewGZipEncoder() EncodingHandler {
@@ -69,6 +77,10 @@ func (p *gzipEncoding) Decoder(req Request, cxt Context, reader io.Reader) (io.R
   return r
 }
 
+func (p *gzipEncoding) String() string {
+  return "gzip"
+}
+
 func NewDeflateEncoder() EncodingHandler {
   return new(deflateEncoding)
 }
@@ -86,6 +98,10 @@ func (p *deflateEncoding) Decoder(req Request, cxt Context, reader io.Reader) (i
   return flate.NewReader(reader)
 }
 
+func (p *deflateEncoding) String() string {
+  return "deflate"
+}
+
 func NewChunkedEncoder() EncodingHandler {
   return new(chunkedEncoding)
 }
@@ -100,6 +116,10 @@ func (p *chunkedEncoding) Encoder(req Request, cxt Context, writer io.Writer) (i
 
 func (p *chunkedEncoding) Decoder(req Request, cxt Context, reader io.Reader) (io.Reader) {
   return flate.NewReader(reader)
+}
+
+func (p *chunkedEncoding) String() string {
+  return "chunked"
 }
 
 

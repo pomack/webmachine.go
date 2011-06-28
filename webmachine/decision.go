@@ -1077,7 +1077,7 @@ func (p *wmDecisionCore) doV3o18b() WMDecision {
 
 // Redirect
 func (p *wmDecisionCore) doV3o20() WMDecision {
-  if p.handler.HasRespBody() {
+  if p.handler.HasRespBody(p.req, p.cxt) {
     return v3o18
   }
   p.resp.WriteHeader(204)
@@ -1152,7 +1152,7 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
 }
 
 func (p *wmDecisionCore) encodeBodyIfSet() bool {
-  if !p.handler.HasRespBody() {
+  if !p.handler.HasRespBody(p.req, p.cxt) {
     return false
   }
   bodyWriter, _ := p.bodyEncoder(p.resp)

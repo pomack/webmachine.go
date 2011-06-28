@@ -397,7 +397,11 @@ func (p *FileResource) ResponseIsRedirect(req Request, cxt Context) (bool, Reque
   return false, req, cxt, 0, nil
 }
 
-func (p *FileResource) HasRespBody() bool {
+func (p *FileResource) HasRespBody(req Request, cxt Context) bool {
+  method := req.Method()
+  if method == HEAD || method == PUT || method == DELETE {
+    return false
+  }
   return true
 }
 

@@ -100,7 +100,7 @@ type RequestHandler interface {
   FinishRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   
-  HasRespBody() bool
+  HasRespBody(req Request, cxt Context) bool
 }
 
 type WebMachine interface {

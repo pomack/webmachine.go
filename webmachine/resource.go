@@ -143,6 +143,6 @@ func (p *DefaultRequestHandler) ResponseIsRedirect(req Request, cxt Context) (bo
   return false, req, cxt, 0, nil
 }
 
-func (p *DefaultRequestHandler) HasRespBody() bool {
+func (p *DefaultRequestHandler) HasRespBody(req Request, cxt Context) bool {
   return false
 }

@@ -118,11 +118,3 @@ type WriteThrough struct {
   to io.Writer
 }
 
-
-type PassThroughMediaTypeHandler struct {
-  mediaType string
-  reader io.ReadCloser
-  numberOfBytes int64
-  lastModified *time.Time
-}
-

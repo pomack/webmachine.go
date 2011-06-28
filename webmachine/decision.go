@@ -1038,7 +1038,6 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
       p.resp.Header().Set("Expires", expires.Format(http.TimeFormat))
     }
     if p.mediaTypeOutputHandler != nil {
-      p.resp.WriteHeader(200)
       p.mediaTypeOutputHandler.OutputTo(p.req, p.cxt, p.resp, p.resp)
       p.resp.Flush()
       return wmResponded

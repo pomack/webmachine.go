@@ -11,6 +11,30 @@ import (
 )
 
 
+type PassThroughMediaTypeHandler struct {
+  mediaType string
+  reader io.ReadCloser
+  numberOfBytes int64
+  lastModified *time.Time
+  writtenStatusHeader bool
+}
+
+
+type PassThroughMediaTypeInputHandler struct {
+  mediaType string
+  charset string
+  language string
+  filename string
+  urlPath string
+  append bool
+  numberOfBytes int64
+  reader io.Reader
+  writtenStatusHeader bool
+}
+
+
+
+
 func NewPassThroughMediaTypeHandler(mediaType string, reader io.ReadCloser, numberOfBytes int64, lastModified *time.Time) *PassThroughMediaTypeHandler {
   return &PassThroughMediaTypeHandler{
     mediaType: mediaType,
@@ -94,6 +118,10 @@ func (p *PassThroughMediaTypeHandler) splitRangeHeaderString(rangeHeader string)
 }
 
 func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+  if !p.writtenStatusHeader {
+    resp.WriteHeader(200)
+    p.writtenStatusHeader = true
+  }
   if req.Header().Get("Accept-Ranges") == "bytes" {
     rangeHeader := req.Header().Get("Range")
     if len(rangeHeader) > 6 && rangeHeader[0:6] == "bytes=" {
@@ -175,3 +203,113 @@ func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer 
   }
 }
 
+
+
+
+
+
+func NewPassThroughMediaTypeInputHandler(mediaType, charset, language, filename, urlPath string, append bool, numberOfBytes int64, reader io.Reader) *PassThroughMediaTypeInputHandler {
+  return &PassThroughMediaTypeInputHandler{
+    mediaType: mediaType,
+    charset: charset,
+    language: language,
+    filename: filename,
+    urlPath: urlPath,
+    append: append,
+    numberOfBytes: numberOfBytes,
+    reader: reader,
+  }
+}
+
+func (p *PassThroughMediaTypeInputHandler) MediaType() string {
+  return p.mediaType
+}
+
+func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+  fileInfo, err := os.Stat(p.filename)
+  var file *os.File
+  m := make(map[string]string)
+  w := json.Encoder(writer)
+  dirname, tail = path.Split(p.filename)
+  file = nil
+  defer func() {
+    if file != nil {
+      file.Close()
+    }
+  }()
+  if fileInfo == nil {
+    if err = os.MkdirAll(dirname, 0644); err != nil {
+      log.Print("Unable to create directory to store file due to error: ", err)
+      if !p.writtenStatusHeader {
+        resp.Header().Set("Content-Type", "application/json")
+        resp.WriteHeader(500)
+        p.writtenStatusHeader = true
+      }
+      m["status"] = "error"
+      m["message"] = err.String()
+      m["result"] = p.urlPath
+      w.Encode(m)
+      return
+    }
+    if file, err = os.OpenFile(p.filename, os.O_CREATE, 0644); err != nil {
+      log.Print("Unable to create file named: \"", p.filename, "\" due to error: ", err)
+      if !p.writtenStatusHeader {
+        resp.Header().Set("Content-Type", "application/json")
+        resp.WriteHeader(500)
+        p.writtenStatusHeader = true
+      }
+      m["status"] = "error"
+      m["message"] = err.String()
+      m["result"] = p.urlPath
+      w.Encode(m)
+      return
+    }
+  } else {
+    if p.append {
+      file, err = os.OpenFile(p.filename, os.O_APPEND, 0644)
+    } else {
+      file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_TRUNC, 0644)
+    }
+    if err != nil {
+      log.Print("Unable to open file \"", p.filename, "\"for writing due to error: ", err)
+      if !p.writtenStatusHeader {
+        resp.Header().Set("Content-Type", "application/json")
+        resp.WriteHeader(500)
+        p.writtenStatusHeader = true
+      }
+      m["status"] = "error"
+      m["message"] = err.String()
+      m["result"] = p.urlPath
+      w.Encode(m)
+      return
+    }
+  }
+  var n int
+  if p.numberOfBytes >= 0 {
+    n, err = io.Copyn(file, p.reader, p.numberOfBytes)
+  } else {
+    n, err = io.Copy(file, p.reader)
+  }
+  log.Print("Wrote ", n, " bytes to file with error: ", err)
+  if err != nil && err != os.EOF {
+    if !p.writtenStatusHeader {
+      resp.Header().Set("Content-Type", "application/json")
+      resp.WriteHeader(500)
+      p.writtenStatusHeader = true
+    }
+    m["status"] = "error"
+    m["message"] = err.String()
+    m["result"] = p.urlPath
+    w.Encode(m)
+    return
+  }
+  if !p.writtenStatusHeader {
+    resp.Header().Set("Content-Type", "application/json")
+    resp.WriteHeader(200)
+    p.writtenStatusHeader = true
+  }
+  m["status"] = "success"
+  m["message"] = ""
+  m["result"] = p.urlPath
+  w.Encode(m)
+}

@@ -352,11 +352,12 @@ func (p *FileResource) Variances(req Request, cxt Context) ([]string, Request, C
   
 }
 */
-/*
+
 func (p *FileResource) IsConflict(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-  
+  frc := cxt.(FileResourceContext)
+  return frc.Exists() && !frc.IsFile(), req, cxt, 0, nil
 }
-*/
+
 /*
 func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   

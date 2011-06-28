@@ -39,14 +39,16 @@ type wmDecisionCore struct {
 func handleRequest(handler RequestHandler, req Request, resp ResponseWriter) {
   d := &wmDecisionCore{req: req, resp: resp, handler: handler, currentDecisionId: v3b13}
   log.Print("[WM] Handling request for: ", req.Method(), " ", req.URL().Path, "\n")
-  /*
   defer func() {
     log.Print("[WM] Running deferred function for: ", req.Method(), " ", req.URL().Path, "\n")
+    handler.FinishRequest(d.req, d.cxt)
+    /*
     if e := recover(); e != nil {
       resp.WriteHeader(http.StatusInternalServerError)
     }
+    */
   }()
-  */
+  d.req, d.cxt = handler.StartRequest(d.req, d.cxt)
   nextDecision := v3b13
   log.Print("[WM] decision: ", nextDecision, " for ", req.Method(), " ", req.URL().Path, "\n")
   for nextDecision != wmResponded {

@@ -87,6 +87,7 @@ func (p *fileResourceContext) WriterOpen(append bool) (io.WriteCloser, os.Error)
 
 func (p *fileResourceContext) Close() os.Error {
   var e1, e2 os.Error
+  p.fileInfo = nil
   if p.reader != nil {
     e1 = p.reader.Close()
   }
@@ -197,12 +198,16 @@ func (p *FileResource) HandlerFor(req Request, writer ResponseWriter) RequestHan
   return nil
 }
 
-func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) StartRequest(req Request, cxt Context) (Request, Context) {
   frc := p.GenerateContext(req, cxt)
   frc.SetFullPath(filepath.Join(p.dirPath, filepath.Clean(req.URL().Path[len(p.urlPathPrefix):])))
-  return true, req, frc, 0, nil
+  return req, frc
 }
-
+/*
+func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+  return true, req, cxt, 0, nil
+}
+*/
 func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
   if !frc.Exists() {
@@ -387,11 +392,14 @@ func (p *FileResource) GenerateETag(req Request, cxt Context) (string, Request, 
   
 }
 */
-/*
+
 func (p *FileResource) FinishRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-  
+  if frc, ok := cxt.(FileResourceContext); ok {
+    frc.Close()
+  }
+  return true, req, cxt, 0, nil
 }
-*/
+
 
 func (p *FileResource) ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return false, req, cxt, 0, nil

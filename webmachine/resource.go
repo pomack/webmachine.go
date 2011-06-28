@@ -11,6 +11,10 @@ func NewDefaultRequestHandler() *DefaultRequestHandler {
   return new(DefaultRequestHandler)
 }
 
+func (p *DefaultRequestHandler) StartRequest(req Request, cxt Context) (Request, Context) {
+  return req, cxt
+}
+
 func (p *DefaultRequestHandler) ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return true, req, cxt, 0, nil
 }

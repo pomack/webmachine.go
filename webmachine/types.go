@@ -66,6 +66,7 @@ type EncodingHandler interface {
 }
 
 type RequestHandler interface {
+  StartRequest(req Request, cxt Context) (Request, Context)
   ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, os.Error)

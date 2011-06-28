@@ -41,7 +41,7 @@ func handleRequest(handler RequestHandler, req Request, resp ResponseWriter) {
   log.Print("[WM] Handling request for: ", req.Method(), " ", req.URL().Path, "\n")
   defer func() {
     log.Print("[WM] Running deferred function for: ", req.Method(), " ", req.URL().Path, "\n")
-    handler.FinishRequest(d.req, d.cxt)
+    go handler.FinishRequest(d.req, d.cxt)
     /*
     if e := recover(); e != nil {
       resp.WriteHeader(http.StatusInternalServerError)

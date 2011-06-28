@@ -3,6 +3,7 @@ package webmachine
 import (
   "io"
   "log"
+  "path"
   "path/filepath"
   "os"
   "mime"
@@ -228,7 +229,6 @@ func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Reque
 func (p *FileResource) IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, os.Error) {
   method := req.Method()
   frc := cxt.(FileResourceContext)
-  // TODO check authorization header
   if method == POST || method == PUT || method == DELETE {
     return !frc.Exists() || (frc.IsDir() || (frc.IsFile() && frc.CanWrite(true))), "", req, cxt, 0, nil
   }
@@ -236,18 +236,21 @@ func (p *FileResource) IsAuthorized(req Request, cxt Context) (bool, string, Req
 }
 
 func (p *FileResource) Forbidden(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-  // TODO check authorization header
   return false, req, cxt, 0, nil
 }
+
 func (p *FileResource) AllowMissingPost(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return true, req, cxt, 0, nil
 }
+
 func (p *FileResource) MalformedRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return false, req, cxt, 0, nil
 }
+
 func (p *FileResource) URITooLong(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return len(req.URL().Path) > 4096, req, cxt, 0, nil
 }
+
 func (p *FileResource) DeleteResource(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
   if !frc.Exists() {
@@ -265,6 +268,12 @@ func (p *FileResource) DeleteResource(req Request, cxt Context) (bool, Request, 
   }
   return false, req, cxt, 500, err
 }
+
+/*
+func (p *FileResource) DeleteCompleted(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+  return true, req, cxt, 0, nil
+}
+*/
 
 func (p *FileResource) PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return true, req, cxt, 0, nil
@@ -305,20 +314,19 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
   }
   return arr, req, cxt, 0, nil
 }
-/*
+
 func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
   extension := path.Ext(frc.FullPath())
-  mths := make([]MediaTypeHandler, 1)
   mediaType := mime.TypeByExtension(extension)
   if len(mediaType) == 0 {
     // default to text/plain
     mediaType = "text/plain"
   }
-  arr := []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, p.reader, frc.Len(), frc.LastModified())}
+  arr := []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, req.Body(), frc.Len(), frc.LastModified())}
   return arr, req, cxt, 0, nil
 }
-*/
+
 /*
 func (p *FileResource) IsLanguageAvailable(languages []string, req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   

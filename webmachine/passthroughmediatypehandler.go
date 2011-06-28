@@ -3,7 +3,9 @@ package webmachine
 import (
   "container/list"
   "io"
+  "json"
   "log"
+  "path"
   "strconv"
   "strings"
   "time"
@@ -229,8 +231,8 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
   fileInfo, err := os.Stat(p.filename)
   var file *os.File
   m := make(map[string]string)
-  w := json.Encoder(writer)
-  dirname, tail = path.Split(p.filename)
+  w := json.NewEncoder(writer)
+  dirname, _ := path.Split(p.filename)
   file = nil
   defer func() {
     if file != nil {
@@ -284,7 +286,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
       return
     }
   }
-  var n int
+  var n int64
   if p.numberOfBytes >= 0 {
     n, err = io.Copyn(file, p.reader, p.numberOfBytes)
   } else {

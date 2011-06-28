@@ -17,10 +17,10 @@ type jsonDirectoryEntry struct {
 }
 
 type jsonDirectoryEntryResult struct {
-  Result string "result"
+  Status string "status"
   Message string "message"
   Path string "path"
-  Entries []jsonDirectoryEntry "entries"
+  Result []jsonDirectoryEntry "result"
 }
 
 type JsonDirectoryListing struct {
@@ -38,11 +38,12 @@ type htmlDirectoryEntry struct {
 }
 
 type htmlDirectoryEntryResult struct {
+  Status string "status"
   Tail string "tail"
   Path string "path"
   Message string "message"
   LastModified string "last_modified"
-  Entries []htmlDirectoryEntry "entries"
+  Result []htmlDirectoryEntry "result"
 }
 
 type HtmlDirectoryListing struct {
@@ -63,16 +64,18 @@ func (p *JsonDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
   result := new(jsonDirectoryEntryResult)
   result.Path = p.urlPath
   var err os.Error
+  defer func() {
+    if p.file != nil {
+      p.file.Close()
+      p.file = nil
+    }
+  }()
   if p.file == nil {
     p.file, err = os.Open(p.fullPath)
     if err != nil {
-      if p.file != nil {
-        p.file.Close()
-        p.file = nil
-      }
-      result.Result = "error"
+      result.Status = "error"
       result.Message = err.String()
-      result.Entries = make([]jsonDirectoryEntry, 0)
+      result.Result = make([]jsonDirectoryEntry, 0)
       encoder := json.NewEncoder(writer)
       encoder.Encode(result)
       return
@@ -80,13 +83,11 @@ func (p *JsonDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
   }
   fileInfos, err := p.file.Readdir(-1)
   if err != nil {
-    result.Result = "error"
+    result.Status = "error"
     result.Message = err.String()
-    result.Entries = make([]jsonDirectoryEntry, 0)
+    result.Result = make([]jsonDirectoryEntry, 0)
     encoder := json.NewEncoder(writer)
     encoder.Encode(result)
-    p.file.Close()
-    p.file = nil
     return
   }
   entries := make([]jsonDirectoryEntry, len(fileInfos))
@@ -104,11 +105,9 @@ func (p *JsonDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
     }
     entries[i].LastModified = time.SecondsToUTC(int64(fileInfo.Mtime_ns / 1e9)).Format(time.RFC3339)
   }
-  p.file.Close()
-  p.file = nil
-  result.Result = "success"
+  result.Status = "success"
   result.Message = ""
-  result.Entries = entries
+  result.Result = entries
   encoder := json.NewEncoder(writer)
   encoder.Encode(result)
 }
@@ -127,15 +126,17 @@ func (p *HtmlDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
   result.Path = p.urlPath
   result.Tail = path.Base(p.urlPath)
   var err os.Error
+  defer func() {
+    if p.file != nil {
+      p.file.Close()
+      p.file = nil
+    }
+  }()
   if p.file == nil {
     p.file, err = os.Open(p.fullPath)
     if err != nil {
-      if p.file != nil {
-        p.file.Close()
-        p.file = nil
-      }
       result.Message = err.String()
-      result.Entries = make([]htmlDirectoryEntry, 0)
+      result.Result = make([]htmlDirectoryEntry, 0)
       HTML_DIRECTORY_LISTING_ERROR_TEMPLATE.Execute(writer, result)
       return
     }
@@ -143,10 +144,8 @@ func (p *HtmlDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
   fileInfos, err := p.file.Readdir(-1)
   if err != nil {
     result.Message = err.String()
-    result.Entries = make([]htmlDirectoryEntry, 0)
+    result.Result = make([]htmlDirectoryEntry, 0)
     HTML_DIRECTORY_LISTING_ERROR_TEMPLATE.Execute(writer, result)
-    p.file.Close()
-    p.file = nil
     return
   }
   entries := make([]htmlDirectoryEntry, len(fileInfos))
@@ -168,9 +167,8 @@ func (p *HtmlDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writ
   if dirInfo != nil {
     result.LastModified = time.SecondsToUTC(int64(dirInfo.Mtime_ns / 1e9)).Format(time.ANSIC)
   }
-  p.file.Close()
-  p.file = nil
+  result.Status = "success"
   result.Message = ""
-  result.Entries = entries
+  result.Result = entries
   HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE.Execute(writer, result)
 }

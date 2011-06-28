@@ -34,7 +34,7 @@ func (p *responseWriter) Header() http.Header {
 }
 
 func (p *responseWriter) Write(data []byte) (int, os.Error) {
-  log.Print("[RW]: Writing data ", len(data), " bytes\n")
+  log.Print("[RW]: Writing data ", len(data), " bytes: ", string(data), "\n")
   return p.w.Write(data)
 }
 

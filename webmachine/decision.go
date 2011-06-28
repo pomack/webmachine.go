@@ -920,7 +920,7 @@ func (p *wmDecisionCore) doV3n5() WMDecision {
   return wmResponded
 }
 
-// Redirect
+// Redirect -- only accessible if method == POST
 func (p *wmDecisionCore) doV3n11() WMDecision {
   var postIsCreate bool
   var httpCode int

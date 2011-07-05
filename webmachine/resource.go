@@ -59,8 +59,8 @@ func (p *DefaultRequestHandler) ContentTypesProvided(req Request, cxt Context) (
   return []MediaTypeHandler{}, req, cxt, 0, nil
 }
 
-func (p *DefaultRequestHandler) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
-  return []MediaTypeHandler{}, req, cxt, 0, nil
+func (p *DefaultRequestHandler) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error) {
+  return []MediaTypeInputHandler{}, req, cxt, 0, nil
 }
 
 func (p *DefaultRequestHandler) IsLanguageAvailable(language []string, req Request, cxt Context) (bool, Request, Context, int, os.Error) {

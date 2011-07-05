@@ -54,6 +54,11 @@ type MediaTypeHandler interface {
   OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter)
 }
 
+type MediaTypeInputHandler interface {
+  MediaType() string
+  OutputTo(req Request, cxt Context, writer io.Writer) (int, http.Header, os.Error)
+}
+
 type CharsetHandler interface {
   Charset() string
   CharsetConverter(req Request, cxt Context, reader io.Reader) (io.Reader)
@@ -85,7 +90,7 @@ type RequestHandler interface {
   CreatePath(req Request, cxt Context) (string, Request, Context, int, os.Error)
   ProcessPost(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error)
-  ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error)
+  ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error)
   IsLanguageAvailable(languages []string, req Request, cxt Context) (bool, Request, Context, int, os.Error)
   CharsetsProvided(charsets []string, req Request, cxt Context) ([]CharsetHandler, Request, Context, int, os.Error)
   EncodingsProvided(encodings []string, req Request, cxt Context) ([]EncodingHandler, Request, Context, int, os.Error)

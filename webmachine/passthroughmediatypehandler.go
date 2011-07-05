@@ -1,13 +1,12 @@
 package webmachine
 
 import (
-  "container/list"
+  "http"
   "io"
   "json"
   "log"
   "path"
   "strconv"
-  "strings"
   "time"
   "os"
 )
@@ -158,7 +157,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaType() string {
   return p.mediaType
 }
 
-func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, writer io.Writer) (int, http.Header, os.Error) {
   fileInfo, err := os.Stat(p.filename)
   var file *os.File
   m := make(map[string]string)
@@ -172,30 +171,24 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
   }()
   if fileInfo == nil {
     if err = os.MkdirAll(dirname, 0644); err != nil {
-      log.Print("Unable to create directory to store file due to error: ", err)
-      if !p.writtenStatusHeader {
-        resp.Header().Set("Content-Type", "application/json")
-        resp.WriteHeader(500)
-        p.writtenStatusHeader = true
-      }
+      log.Print("[PTMTIH]: Unable to create directory to store file due to error: ", err)
+      headers := make(http.Header)
+      headers.Set("Content-Type", "application/json")
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
       w.Encode(m)
-      return
+      return 500, headers, err
     }
     if file, err = os.OpenFile(p.filename, os.O_CREATE, 0644); err != nil {
-      log.Print("Unable to create file named: \"", p.filename, "\" due to error: ", err)
-      if !p.writtenStatusHeader {
-        resp.Header().Set("Content-Type", "application/json")
-        resp.WriteHeader(500)
-        p.writtenStatusHeader = true
-      }
+      log.Print("[PTMTIH]: Unable to create file named: \"", p.filename, "\" due to error: ", err)
+      headers := make(http.Header)
+      headers.Set("Content-Type", "application/json")
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
       w.Encode(m)
-      return
+      return 500, headers, err
     }
   } else {
     if p.append {
@@ -204,17 +197,14 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
       file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_TRUNC, 0644)
     }
     if err != nil {
-      log.Print("Unable to open file \"", p.filename, "\"for writing due to error: ", err)
-      if !p.writtenStatusHeader {
-        resp.Header().Set("Content-Type", "application/json")
-        resp.WriteHeader(500)
-        p.writtenStatusHeader = true
-      }
+      log.Print("[PTMTIH]: Unable to open file \"", p.filename, "\"for writing due to error: ", err)
+      headers := make(http.Header)
+      headers.Set("Content-Type", "application/json")
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
       w.Encode(m)
-      return
+      return 500, headers, err
     }
   }
   var n int64
@@ -223,26 +213,21 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
   } else {
     n, err = io.Copy(file, p.reader)
   }
-  log.Print("Wrote ", n, " bytes to file with error: ", err)
+  log.Print("[PTMTIH]: Wrote ", n, " bytes to file with error: ", err)
   if err != nil && err != os.EOF {
-    if !p.writtenStatusHeader {
-      resp.Header().Set("Content-Type", "application/json")
-      resp.WriteHeader(500)
-      p.writtenStatusHeader = true
-    }
+    headers := make(http.Header)
+    headers.Set("Content-Type", "application/json")
     m["status"] = "error"
     m["message"] = err.String()
     m["result"] = p.urlPath
     w.Encode(m)
-    return
+    return 500, headers, err
   }
-  if !p.writtenStatusHeader {
-    resp.Header().Set("Content-Type", "application/json")
-    resp.WriteHeader(200)
-    p.writtenStatusHeader = true
-  }
+  headers := make(http.Header)
+  headers.Set("Content-Type", "application/json")
   m["status"] = "success"
   m["message"] = ""
   m["result"] = p.urlPath
   w.Encode(m)
+  return 200, headers, nil
 }

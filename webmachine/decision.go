@@ -1,6 +1,7 @@
 package webmachine
 
 import (
+  "bytes"
   "compress/flate"
   "compress/gzip"
   "compress/lzw"
@@ -947,9 +948,10 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
       p.writeHaltOrError(httpCode, httpError)
       return wmResponded
     }
-    p.resp.WriteHeader(n)
-    log.Print("Wrote Header but may not return wmResponded in doV3n11()\n")
-    p.encodeBodyIfSet()
+    // TODO Aalok check what should be done here
+    //p.resp.WriteHeader(n)
+    //log.Print("Wrote Header but may not return wmResponded in doV3n11()\n")
+    //p.encodeBodyIfSet()
   }
   var respIsRedirect bool
   respIsRedirect, p.req, p.cxt, httpCode, httpError = p.handler.ResponseIsRedirect(p.req, p.cxt)
@@ -1093,6 +1095,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
   var httpError os.Error
   // TOOD v3n11
   isConflict, p.req, p.cxt, httpCode, httpError = p.handler.IsConflict(p.req, p.cxt)
+  log.Print("[WDC]: V3P3: isConflict", isConflict, ", code: ", httpCode, ", error: ", httpError)
   if httpCode > 0 {
     p.writeHaltOrError(httpCode, httpError)
     return wmResponded
@@ -1102,6 +1105,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
     return wmResponded
   }
   code, err := p.acceptHelper()
+  log.Print("[WDC]: V3P3: acceptHelper code: ", code, ", err: ", err)
   if err != nil {
     p.resp.WriteHeader(500)
     io.WriteString(p.resp, err.String())
@@ -1133,9 +1137,11 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
   if len(ct) == 0 {
     ct = "application/octet-stream"
   }
-  var ctAccepted []MediaTypeHandler
+  var ctAccepted []MediaTypeInputHandler
   var httpCode int
+  var httpHeaders http.Header
   var httpError os.Error
+  var buf *bytes.Buffer
   ctAccepted, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesAccepted(p.req, p.cxt)
   if httpCode > 0 {
     p.writeHaltOrError(httpCode, httpError)
@@ -1150,7 +1156,27 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
   if len(acceptArr) == 0 {
     return 415, nil
   }
-  return 0, nil
+  for i := 0; i < len(arr); i++ {
+    if arr[i] == mt {
+      log.Print("[AH]: Capturing accepted value of type ", mt)
+      buf = bytes.NewBuffer(make([]byte, 4096))
+      httpCode, httpHeaders, httpError = ctAccepted[i].OutputTo(p.req, p.cxt, buf)
+      break
+    }
+  }
+  if httpHeaders != nil {
+    headers := p.resp.Header()
+    for k, v := range httpHeaders {
+      for _, v1 := range v {
+        headers.Set(k, v1)
+      }
+    }
+  }
+  log.Print("[AH]: Done capturing input stream of type ", mt)
+  if httpError == nil {
+    return httpCode, buf
+  }
+  return httpCode, httpError
 }
 
 func (p *wmDecisionCore) encodeBodyIfSet() bool {

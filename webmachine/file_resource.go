@@ -1,6 +1,7 @@
 package webmachine
 
 import (
+  "bytes"
   "io"
   "log"
   "path"
@@ -8,6 +9,7 @@ import (
   "os"
   "mime"
   "rand"
+  "strconv"
   "time"
 )
 
@@ -300,7 +302,18 @@ func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Co
 
 func (p *FileResource) ProcessPost(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   // TODO handle POST
-  return false, req, cxt, 0, nil
+  mths, req, cxt, code, err := p.ContentTypesAccepted(req, cxt)
+  if len(mths) > 0 {
+    buf := bytes.NewBuffer(make([]byte, 4096))
+    httpCode, _, httpError := mths[0].OutputTo(req, cxt, buf)
+    if httpCode > 0 {
+      if httpError == nil && buf.Len() > 0 {
+        return false, req, cxt, httpCode, buf
+      }
+    }
+    return false, req, cxt, httpCode, httpError
+  }
+  return false, req, cxt, code, err
 }
 
 func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
@@ -320,15 +333,28 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
   return arr, req, cxt, 0, nil
 }
 
-func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
+func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
-  extension := path.Ext(frc.FullPath())
-  mediaType := mime.TypeByExtension(extension)
+  mediaType := req.Header()["Content-Type"]
   if len(mediaType) == 0 {
-    // default to text/plain
-    mediaType = "text/plain"
+    extension := path.Ext(frc.FullPath())
+    mediaType := mime.TypeByExtension(extension)
+    if len(mediaType) == 0 {
+      // default to text/plain
+      mediaType = "text/plain"
+    }
   }
-  arr := []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, req.Body(), frc.Len(), frc.LastModified())}
+  knownContentLengthStr, ok := req.Header()["Content-Length"]
+  knownContentLength := int64(-1)
+  if ok {
+    var err os.Error
+    knownContentLength, err = strconv.Atoi64(knownContentLengthStr[0])
+    if err != nil {
+      knownContentLength = -1
+    }
+  }
+  
+  arr := []MediaTypeInputHandler{NewPassThroughMediaTypeInputHandler(mediaType[0], "", "", frc.FullPath(), req.URL().Path, false, knownContentLength, req.Body())}
   return arr, req, cxt, 0, nil
 }
 

@@ -1,6 +1,7 @@
 package webmachine
 
 import (
+  "container/list"
   "mime"
   "strconv"
   "strings"

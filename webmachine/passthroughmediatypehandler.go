@@ -180,7 +180,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
       w.Encode(m)
       return 500, headers, err
     }
-    if file, err = os.OpenFile(p.filename, os.O_CREATE, 0644); err != nil {
+    if file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
       log.Print("[PTMTIH]: Unable to create file named: \"", p.filename, "\" due to error: ", err)
       headers := make(http.Header)
       headers.Set("Content-Type", "application/json")
@@ -192,7 +192,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
     }
   } else {
     if p.append {
-      file, err = os.OpenFile(p.filename, os.O_APPEND, 0644)
+      file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_APPEND, 0644)
     } else {
       file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_TRUNC, 0644)
     }

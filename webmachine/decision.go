@@ -996,7 +996,7 @@ func (p *wmDecisionCore) doV3o14() WMDecision {
   }
   code, err := p.acceptHelper()
   if err != nil {
-    p.resp.WriteHeader(500)
+    p.resp.WriteHeader(code)
     io.WriteString(p.resp, err.String())
     return wmResponded
   }
@@ -1107,7 +1107,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
   code, err := p.acceptHelper()
   log.Print("[WDC]: V3P3: acceptHelper code: ", code, ", err: ", err)
   if err != nil {
-    p.resp.WriteHeader(500)
+    p.resp.WriteHeader(code)
     io.WriteString(p.resp, err.String())
     return wmResponded
   }

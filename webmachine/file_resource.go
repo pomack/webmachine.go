@@ -296,7 +296,27 @@ func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Co
       frc2 = NewFileResourceContextWithPath(newPath)
     }
     frc = frc2
+  } else if frc.Exists() {
+    p := frc.FullPath()
+    dir, tail := path.Split(p)
+    ext := path.Ext(tail)
+    basename := tail
+    uniquify := time.UTC().Format(".20060102.150405")
+    if len(ext) > 0 {
+      basename = tail[:len(tail)-len(ext)] + uniquify
+      frc.SetFullPath(path.Join(dir, basename + ext))
+      for counter := 1; frc.Exists(); counter++ {
+        frc.SetFullPath(path.Join(dir, basename + "." + strconv.Itoa(counter) + ext))
+      }
+    } else {
+      basename = basename + uniquify
+      frc.SetFullPath(path.Join(dir, basename))
+      for counter := 1; frc.Exists(); counter++ {
+        frc.SetFullPath(path.Join(dir, basename + "." + strconv.Itoa(counter)))
+      }
+    }
   }
+  log.Print("[FileResource]: Will use path ", frc.FullPath())
   return frc.FullPath(), req, frc, 0, nil
 }
 
@@ -353,8 +373,7 @@ func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTy
       knownContentLength = -1
     }
   }
-  
-  arr := []MediaTypeInputHandler{NewPassThroughMediaTypeInputHandler(mediaType[0], "", "", frc.FullPath(), req.URL().Path, false, knownContentLength, req.Body())}
+  arr := []MediaTypeInputHandler{NewPassThroughMediaTypeInputHandler(mediaType[0], "", "", frc.FullPath(), path.Join(p.urlPathPrefix, path.Base(frc.FullPath())), false, knownContentLength, req.Body())}
   return arr, req, cxt, 0, nil
 }
 

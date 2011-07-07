@@ -96,7 +96,7 @@ type RequestHandler interface {
   EncodingsProvided(encodings []string, req Request, cxt Context) ([]EncodingHandler, Request, Context, int, os.Error)
   Variances(req Request, cxt Context) ([]string, Request, Context, int, os.Error)
   IsConflict(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-  MultipleChoices(req Request, cxt Context) (bool, Request, Context, int, os.Error)
+  MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, os.Error)
   PreviouslyExisted(req Request, cxt Context) (bool, Request, Context, int, os.Error)
   MovedPermanently(req Request, cxt Context) (string, Request, Context, int, os.Error)
   MovedTemporarily(req Request, cxt Context) (string, Request, Context, int, os.Error)

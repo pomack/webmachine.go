@@ -1,6 +1,7 @@
 package webmachine
 
 import (
+  "http"
   "os"
   "time"
 )
@@ -135,8 +136,8 @@ func (p *DefaultRequestHandler) Expires(req Request, cxt Context) (*time.Time, R
   return nil, req, cxt, 0, nil
 }
 
-func (p *DefaultRequestHandler) MultipleChoices(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-  return false, req, cxt, 0, nil
+func (p *DefaultRequestHandler) MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, os.Error) {
+  return false, nil, req, cxt, 0, nil
 }
 
 func (p *DefaultRequestHandler) FinishRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error) {

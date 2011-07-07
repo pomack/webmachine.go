@@ -2,6 +2,8 @@ package webmachine
 
 import (
   "bytes"
+  "container/list"
+  "http"
   "io"
   "log"
   "path"
@@ -37,17 +39,20 @@ type FileResourceContext interface {
   IsFile() bool
   LastModified() *time.Time
   Len() int64
+  HasMultipleResources() bool
+  MultipleResourceNames() []string
 }
 
 type fileResourceContext struct {
   fullPath string
   fileInfo *os.FileInfo
+  namedResources []string
   reader io.ReadCloser
   writer io.WriteCloser
 }
 
 func NewFileResourceContext() FileResourceContext {
-  return &fileResourceContext{}
+  return &fileResourceContext{namedResources:make([]string, 0)}
 }
 
 func NewFileResourceContextWithPath(fullPath string) FileResourceContext {
@@ -63,6 +68,42 @@ func (p *fileResourceContext) FullPath() string {
 func (p *fileResourceContext) SetFullPath(fullPath string) {
   p.fullPath = fullPath
   p.fileInfo, _ = os.Stat(fullPath)
+  if len(p.namedResources) > 0 {
+    p.namedResources = make([]string, 0)
+  }
+  if p.fileInfo == nil {
+    dir, tail := path.Split(fullPath)
+    dirInfo, _ := os.Stat(dir)
+    if dirInfo != nil && dirInfo.IsDirectory() {
+      dirFile, _ := os.Open(dir)
+      if dirFile != nil {
+        names, _ := dirFile.Readdirnames(-1)
+        l := list.New()
+        for _, name := range names {
+          if len(name) > len(tail) && name[len(tail)] == '.' && name[:len(tail)] == tail {
+            l.PushBack(name)
+          }
+        }
+        if l.Len() > 0 {
+          i := 0
+          namedResources := make([]string, l.Len())
+          for e := l.Front(); e != nil; e = e.Next() {
+            namedResources[i] = e.Value.(string)
+            i++
+          }
+          p.namedResources = namedResources
+        }
+      }
+    }
+  }
+}
+
+func (p *fileResourceContext) HasMultipleResources() bool {
+  return len(p.namedResources) > 0
+}
+
+func (p *fileResourceContext) MultipleResourceNames() []string {
+  return p.namedResources
 }
 
 func (p *fileResourceContext) ReaderOpen() (io.ReadCloser, os.Error) {
@@ -212,7 +253,7 @@ func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request
 */
 func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   frc := cxt.(FileResourceContext)
-  if !frc.Exists() {
+  if !frc.Exists() && !frc.HasMultipleResources() {
     return false, req, frc, 0, nil
   }
   if frc.IsDir() {
@@ -220,7 +261,7 @@ func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, 
       return p.allowDirectoryListing, req, frc, 0, nil
     }
   }
-  return frc.IsFile(), req, frc, 0, nil
+  return frc.IsFile() || frc.HasMultipleResources(), req, frc, 0, nil
 }
 
 func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, os.Error) {
@@ -341,6 +382,21 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
   var arr []MediaTypeHandler
   if frc.IsDir() {
     arr = []MediaTypeHandler{NewJsonDirectoryListing(frc.FullPath(), req.URL().Path), NewHtmlDirectoryListing(frc.FullPath(), req.URL().Path)}
+  } else if frc.HasMultipleResources() {
+    dir, _ := path.Split(frc.FullPath())
+    filenames := frc.MultipleResourceNames()
+    arr = make([]MediaTypeHandler, len(filenames))
+    for i, filename := range filenames {
+      extension := filepath.Ext(filename)
+      mediaType := mime.TypeByExtension(extension)
+      if len(mediaType) == 0 {
+        // default to text/plain
+        mediaType = "text/plain"
+      }
+      fullFilename := path.Join(dir, filename)
+      tempFrc := NewFileResourceContextWithPath(fullFilename)
+      arr[i] = NewPassThroughMediaTypeHandler(mediaType, tempFrc, tempFrc.Len(), tempFrc.LastModified())
+    }
   } else {
     extension := filepath.Ext(frc.FullPath())
     mediaType := mime.TypeByExtension(extension)
@@ -403,11 +459,38 @@ func (p *FileResource) IsConflict(req Request, cxt Context) (bool, Request, Cont
   return frc.Exists() && !frc.IsFile(), req, cxt, 0, nil
 }
 
-/*
-func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-  
+
+func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, os.Error) {
+  frc := cxt.(FileResourceContext)
+  if frc.HasMultipleResources() {
+    headers := make(http.Header)
+    headers.Set("Vary", "negotiate,accept")
+    headers.Set("TCN", "choice")
+    headers.Set("Accept-Ranges", "bytes")
+    filenames := frc.MultipleResourceNames()
+    contentTypeToFilename := make(map[string]string, len(filenames))
+    contentTypes := make([]string, len(filenames))
+    for i, filename := range filenames {
+      extension := filepath.Ext(filename)
+      mediaType := mime.TypeByExtension(extension)
+      if len(mediaType) == 0 {
+        // default to text/plain
+        mediaType = "text/plain"
+      }
+      contentTypeToFilename[mediaType] = filename
+      contentTypes[i] = mediaType
+    }
+    finalContentType := chooseMediaTypeDefault(contentTypes, req.Header().Get("Accept"), contentTypes[0])
+    finalFilename := contentTypeToFilename[finalContentType]
+    headers.Set("Content-Type", finalContentType)
+    headers.Set("Content-Location", finalFilename)
+    dir, _ := path.Split(frc.FullPath())
+    cxt = NewFileResourceContextWithPath(path.Join(dir, finalFilename))
+    return true, headers, req, cxt, 0, nil
+  }
+  return false, nil, req, cxt, 0, nil
 }
-*/
+
 /*
 func (p *FileResource) PreviouslyExisted(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   

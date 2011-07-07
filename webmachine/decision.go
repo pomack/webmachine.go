@@ -139,7 +139,6 @@ func (p *wmDecisionCore) decision(decisionId WMDecision) WMDecision {
   case v3o14: nextDecision = p.doV3o14() // Conflict?
   case v3o16: nextDecision = p.doV3o16() // PUT?
   case v3o18: nextDecision = p.doV3o18() // Multiple representations?
-  case v3o18b: nextDecision = p.doV3o18b() //
   case v3o20: nextDecision = p.doV3o20() // Response includes an entity?
   case v3p3: nextDecision = p.doV3p3() // Conflict?
   case v3p11: nextDecision = p.doV3p11() // New resource?
@@ -352,6 +351,8 @@ func (p *wmDecisionCore) doV3c3() WMDecision {
     }
     if len(provided) >= 1 {
       p.mediaTypeOutputHandler = provided[0]
+      p.resp.Header().Set("TCN", "choice")
+      p.resp.Header().Set("Vary", "negotiate,accept")
     } else {
       // TODO Default is "text/html" and to_html
       p.mediaTypeOutputHandler = provided[0]
@@ -1020,6 +1021,23 @@ func (p *wmDecisionCore) doV3o16() WMDecision {
 func (p *wmDecisionCore) doV3o18() WMDecision {
   method := p.req.Method()
   buildBody := method == GET || method == HEAD
+  var multipleChoices bool
+  var httpCode int
+  var httpError os.Error
+  var httpHeaders http.Header
+  multipleChoices, httpHeaders, p.req, p.cxt, httpCode, httpError = p.handler.MultipleChoices(p.req, p.cxt)
+  if httpHeaders != nil {
+    headers := p.resp.Header()
+    for k, v := range httpHeaders {
+      for _, v1 := range v {
+        headers.Set(k, v1)
+      }
+    }
+  }
+  if httpCode > 0 {
+    p.writeHaltOrError(httpCode, httpError)
+    return wmResponded
+  }
   if buildBody {
     var etag string
     var httpCode int
@@ -1052,24 +1070,11 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
       }
-      if len(provided) > 0 {
+      if len(provided) > 0 && len(provided) == 1 {
         provided[0].OutputTo(p.req, p.cxt, p.resp, p.resp)
         return wmResponded
       }
     }
-  }
-  return v3o18b
-}
-
-// Multiple representations?
-func (p *wmDecisionCore) doV3o18b() WMDecision {
-  var multipleChoices bool
-  var httpCode int
-  var httpError os.Error
-  multipleChoices, p.req, p.cxt, httpCode, httpError = p.handler.MultipleChoices(p.req, p.cxt)
-  if httpCode > 0 {
-    p.writeHaltOrError(httpCode, httpError)
-    return wmResponded
   }
   if multipleChoices {
     p.resp.WriteHeader(300)

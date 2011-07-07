@@ -80,7 +80,6 @@ const (
   v3o14 // Conflict?
   v3o16 // PUT?
   v3o18 // Multiple representations?
-  v3o18b //
   v3o20 // Response includes an entity?
   v3p3 // Conflict?
   v3p11 // New resource?
@@ -241,8 +240,6 @@ func (p WMDecision) String() string {
     s = "v3o16: PUT?"
   case v3o18: // Multiple representations?
     s = "v3o18: Multiple representations?"
-  case v3o18b: //
-    s = "v3o18b: Multiple representations?"
   case v3o20: // Response includes an entity?
     s = "v3o20: Response includes an entity?"
   case v3p3: // Conflict?

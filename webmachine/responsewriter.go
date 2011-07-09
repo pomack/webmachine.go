@@ -25,7 +25,7 @@ func NewResponseWriter(rw http.ResponseWriter) ResponseWriter {
 }
 
 func (p *responseWriter) WriteHeader(status int) {
-  log.Print("[RW]: Writing Header ", status, "\n")
+  log.Print("[RW]: Writing Header ", status)
   p.rw.WriteHeader(status)
 }
 
@@ -34,7 +34,7 @@ func (p *responseWriter) Header() http.Header {
 }
 
 func (p *responseWriter) Write(data []byte) (int, os.Error) {
-  log.Print("[RW]: Writing data ", len(data), " bytes: ", string(data), "\n")
+  log.Print("[RW]: Writing data ", len(data), " bytes")
   return p.w.Write(data)
 }
 

@@ -11,8 +11,8 @@ import (
 func NewRequestFromHttpRequest(req *http.Request) Request {
   p := new(request)
   p.req = req
-  p.hostParts = strings.Split(req.Host, ".", -1)
-  p.urlParts = strings.Split(req.URL.Path, "/", -1)
+  p.hostParts = strings.Split(req.Host, ".")
+  p.urlParts = strings.Split(req.URL.Path, "/")
   return p
 }
 

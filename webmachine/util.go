@@ -26,14 +26,14 @@ func guessMime(filename string) string {
 }
 
 func splitAcceptString(accept string) []acceptMatch {
-  return splitAcceptArray(strings.Split(accept, ",", -1))
+  return splitAcceptArray(strings.Split(accept, ","))
 }
 
 func splitAcceptArray(accept []string) []acceptMatch {
   retval := make([]acceptMatch, len(accept))
   for i, m := range accept {
     retval[i].parameters = make(map[string]string)
-    parts := strings.Split(m, ";", -1)
+    parts := strings.Split(m, ";")
     if index := strings.Index(parts[0], "/"); index >= 0 {
       retval[i].thetype = strings.TrimSpace(parts[0][0:index])
       retval[i].subtype = strings.TrimSpace(parts[0][index+1:])
@@ -97,14 +97,14 @@ func chooseMediaTypeDefault(providedStrings []string, matchString string, defaul
 }
 
 func splitStandardMatchString(matchString string) []standardMatch {
-  return splitStandardMatchArray(strings.Split(matchString, ",", -1))
+  return splitStandardMatchArray(strings.Split(matchString, ","))
 }
 
 func splitStandardMatchArray(matchStrings []string) []standardMatch {
   retval := make([]standardMatch, len(matchStrings))
   for i, m := range matchStrings {
     retval[i].parameters = make(map[string]string)
-    parts := strings.Split(m, ";", -1)
+    parts := strings.Split(m, ";")
     retval[i].strMatch = strings.TrimSpace(parts[0])
     for j := 1; j < len(parts); j++ {
       if index := strings.Index(parts[j], "="); index >= 0 {
@@ -187,7 +187,7 @@ func chooseEncodingWithDefault(providedStrings []string, matchStrings []standard
 
 func (p *PassThroughMediaTypeHandler) splitRangeHeaderString(rangeHeader string) ([][2]int64) {
   if len(rangeHeader) > 6 && rangeHeader[0:6] == "bytes=" {
-    rangeStrings := strings.Split(rangeHeader[6:], ",", -1)
+    rangeStrings := strings.Split(rangeHeader[6:], ",")
     ranges := make([][2]int64, len(rangeStrings))
     for i, rangeString := range rangeStrings {
       trimmedRangeString := strings.TrimSpace(rangeString)

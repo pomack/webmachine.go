@@ -6,7 +6,7 @@ import (
   "io"
   "log"
   "strconv"
-  "webmachine"
+  WM "github.com/pomack/webmachine.go"
 )
 
 // hello world, the web server
@@ -26,8 +26,8 @@ func main() {
   flag.BoolVar(&allowDirectoryListing, "listing", false, "Allow Directory Listing on GET and HEAD")
   flag.IntVar(&port, "port", 12345, "Port to serve files")
   flag.Parse()
-  wm := webmachine.NewWebMachine()
-  wm.AddRouteHandler(webmachine.NewFileResource(directory, urlPathPrefix, allowWrite, allowDirectoryListing))
+  wm := WM.NewWebMachine()
+  wm.AddRouteHandler(WM.NewFileResource(directory, urlPathPrefix, allowWrite, allowDirectoryListing))
 	err := http.ListenAndServe(":" + strconv.Itoa(port), wm)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err.String())

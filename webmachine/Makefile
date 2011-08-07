@@ -1,7 +1,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=github.com/pomack/webmachine.go
+TARG=github.com/pomack/webmachine.go/webmachine
 GOFILES=\
 	charset.go\
 	chunked.go\

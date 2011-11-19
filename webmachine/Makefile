@@ -11,6 +11,7 @@ GOFILES=\
 	encoders.go\
 	file_resource.go\
 	passthroughmediatypehandler.go\
+	passthroughmediatypeinputhandler.go\
 	request.go\
 	resource.go\
 	responsewriter.go\

@@ -1,41 +1,40 @@
 package webmachine
 
 import (
-  "http"
-  "log"
+    "http"
+    "log"
 )
 
-
 func NewWebMachine() WebMachine {
-  return new(webMachine)
+    return new(webMachine)
 }
 
 func (p *webMachine) AddRouteHandler(handler RouteHandler) {
-  p.routeHandlers.Push(handler)
+    p.routeHandlers.Push(handler)
 }
 
 func (p *webMachine) RemoveRouteHandler(handler RouteHandler) {
-  for i, h := range p.routeHandlers {
-    if h == handler {
-      p.routeHandlers.Delete(i)
-      break
+    for i, h := range p.routeHandlers {
+        if h == handler {
+            p.routeHandlers.Delete(i)
+            break
+        }
     }
-  }
 }
 
 func (p *webMachine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-  r := NewRequestFromHttpRequest(req)
-  rs := NewResponseWriter(resp)
-  log.Print("running URL: ", r.URL().Path, "\n")
-  for _, h := range p.routeHandlers {
-    rh := h.(RouteHandler)
-    
-    if handler := rh.HandlerFor(r, rs); handler != nil {
-      log.Print("found route handler for: ", r.URL().Path, " ", handler, "\n")
-      handleRequest(handler, r, rs)
-      return
+    r := NewRequestFromHttpRequest(req)
+    rs := NewResponseWriter(resp)
+    log.Print("running URL: ", r.URL().Path, "\n")
+    for _, h := range p.routeHandlers {
+        rh := h.(RouteHandler)
+
+        if handler := rh.HandlerFor(r, rs); handler != nil {
+            log.Print("found route handler for: ", r.URL().Path, " ", handler, "\n")
+            handleRequest(handler, r, rs)
+            return
+        }
     }
-  }
-  log.Print("no route handlers matched: ", r.URL().Path, "\n")
-  resp.WriteHeader(http.StatusBadRequest)
+    log.Print("no route handlers matched: ", r.URL().Path, "\n")
+    resp.WriteHeader(http.StatusBadRequest)
 }

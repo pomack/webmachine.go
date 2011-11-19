@@ -1030,7 +1030,7 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
     headers := p.resp.Header()
     for k, v := range httpHeaders {
       for _, v1 := range v {
-        headers.Set(k, v1)
+        headers.Add(k, v1)
       }
     }
   }
@@ -1173,7 +1173,7 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
     headers := p.resp.Header()
     for k, v := range httpHeaders {
       for _, v1 := range v {
-        headers.Set(k, v1)
+        headers.Add(k, v1)
       }
     }
   }

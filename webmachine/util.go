@@ -164,7 +164,7 @@ func chooseCharsetWithDefaultString(providedStrings []string, matchString string
 }
 
 func chooseEncodingWithDefaultString(providedStrings []string, matchString string) string {
-  return chooseStandardMatchDefaultString(providedStrings, matchString, "identity")
+  return chooseStandardMatchDefaultString(providedStrings, matchString, ENCODING_IDENTITY)
 }
 
 func chooseStandardMatchDefault(providedStrings []string, matchStrings []standardMatch, defaultString string) string {
@@ -180,7 +180,7 @@ func chooseCharsetWithDefault(providedStrings []string, matchStrings []standardM
 }
 
 func chooseEncodingWithDefault(providedStrings []string, matchStrings []standardMatch) string {
-  return chooseStandardMatchDefault(providedStrings, matchStrings, "identity")
+  return chooseStandardMatchDefault(providedStrings, matchStrings, ENCODING_IDENTITY)
 }
 
 

@@ -23,7 +23,7 @@ func NewIdentityEncoder() EncodingHandler {
 }
 
 func (p *identityEncoding) Encoding() string {
-  return "identity"
+  return ENCODING_IDENTITY
 }
 
 func (p *identityEncoding) Encoder(req Request, cxt Context, writer io.Writer) (io.Writer) {
@@ -35,7 +35,7 @@ func (p *identityEncoding) Decoder(req Request, cxt Context, reader io.Reader) (
 }
 
 func (p *identityEncoding) String() string {
-  return "identity"
+  return ENCODING_IDENTITY
 }
 
 
@@ -44,7 +44,7 @@ func NewCompressEncoder() EncodingHandler {
 }
 
 func (p *compressEncoding) Encoding() string {
-  return "compress"
+  return ENCODING_COMPRESS
 }
 
 func (p *compressEncoding) Encoder(req Request, cxt Context, writer io.Writer) (io.Writer) {
@@ -56,7 +56,7 @@ func (p *compressEncoding) Decoder(req Request, cxt Context, reader io.Reader) (
 }
 
 func (p *compressEncoding) String() string {
-  return "compress"
+  return ENCODING_COMPRESS
 }
 
 func NewGZipEncoder() EncodingHandler {
@@ -64,7 +64,7 @@ func NewGZipEncoder() EncodingHandler {
 }
 
 func (p *gzipEncoding) Encoding() string {
-  return "gzip"
+  return ENCODING_GZIP
 }
 
 func (p *gzipEncoding) Encoder(req Request, cxt Context, writer io.Writer) (io.Writer) {
@@ -78,7 +78,7 @@ func (p *gzipEncoding) Decoder(req Request, cxt Context, reader io.Reader) (io.R
 }
 
 func (p *gzipEncoding) String() string {
-  return "gzip"
+  return ENCODING_GZIP
 }
 
 func NewDeflateEncoder() EncodingHandler {
@@ -86,7 +86,7 @@ func NewDeflateEncoder() EncodingHandler {
 }
 
 func (p *deflateEncoding) Encoding() string {
-  return "deflate"
+  return ENCODING_DEFLATE
 }
 
 func (p *deflateEncoding) Encoder(req Request, cxt Context, writer io.Writer) (io.Writer) {
@@ -99,7 +99,7 @@ func (p *deflateEncoding) Decoder(req Request, cxt Context, reader io.Reader) (i
 }
 
 func (p *deflateEncoding) String() string {
-  return "deflate"
+  return ENCODING_DEFLATE
 }
 
 func NewChunkedEncoder() EncodingHandler {
@@ -107,7 +107,7 @@ func NewChunkedEncoder() EncodingHandler {
 }
 
 func (p *chunkedEncoding) Encoding() string {
-  return "chunked"
+  return ENCODING_CHUNKED
 }
 
 func (p *chunkedEncoding) Encoder(req Request, cxt Context, writer io.Writer) (io.Writer) {
@@ -119,7 +119,7 @@ func (p *chunkedEncoding) Decoder(req Request, cxt Context, reader io.Reader) (i
 }
 
 func (p *chunkedEncoding) String() string {
-  return "chunked"
+  return ENCODING_CHUNKED
 }
 
 

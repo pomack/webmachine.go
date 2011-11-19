@@ -173,7 +173,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
     if err = os.MkdirAll(dirname, 0644); err != nil {
       log.Print("[PTMTIH]: Unable to create directory to store file due to error: ", err)
       headers := make(http.Header)
-      headers.Set("Content-Type", "application/json")
+      headers.Set("Content-Type", MIME_TYPE_JSON)
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
@@ -183,7 +183,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
     if file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
       log.Print("[PTMTIH]: Unable to create file named: \"", p.filename, "\" due to error: ", err)
       headers := make(http.Header)
-      headers.Set("Content-Type", "application/json")
+      headers.Set("Content-Type", MIME_TYPE_JSON)
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
@@ -199,7 +199,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
     if err != nil {
       log.Print("[PTMTIH]: Unable to open file \"", p.filename, "\"for writing due to error: ", err)
       headers := make(http.Header)
-      headers.Set("Content-Type", "application/json")
+      headers.Set("Content-Type", MIME_TYPE_JSON)
       m["status"] = "error"
       m["message"] = err.String()
       m["result"] = p.urlPath
@@ -216,7 +216,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
   log.Print("[PTMTIH]: Wrote ", n, " bytes to file with error: ", err)
   if err != nil && err != os.EOF {
     headers := make(http.Header)
-    headers.Set("Content-Type", "application/json")
+    headers.Set("Content-Type", MIME_TYPE_JSON)
     m["status"] = "error"
     m["message"] = err.String()
     m["result"] = p.urlPath
@@ -224,7 +224,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
     return 500, headers, err
   }
   headers := make(http.Header)
-  headers.Set("Content-Type", "application/json")
+  headers.Set("Content-Type", MIME_TYPE_JSON)
   m["status"] = "success"
   m["message"] = ""
   m["result"] = p.urlPath

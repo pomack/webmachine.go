@@ -92,7 +92,7 @@ const (
 )
 
 const (
-    MIME_TYPE_TEXT_HTML = "text/html"
+    MIME_TYPE_HTML = "text/html"
     MIME_TYPE_XHTML_XML = "application/xhtml+xml"
     MIME_TYPE_XML = "application/xml"
     MIME_TYPE_CSS = "text/css"
@@ -112,8 +112,16 @@ const (
     MIME_TYPE_SVG = "image/svg+xml"
     MIME_TYPE_TEXT_PLAIN = "text/plain"
     MIME_TYPE_CSV = "text/csv"
+    MIME_TYPE_OCTET_STREAM = "application/octet-stream"
 )
 
+const (
+    ENCODING_IDENTITY = "identity"
+    ENCODING_COMPRESS = "compress"
+    ENCODING_DEFLATE = "deflate"
+    ENCODING_GZIP = "gzip"
+    ENCODING_CHUNKED = "chunked"
+)
 
 var (
   defaultMimeTypes map[string]string
@@ -124,8 +132,8 @@ func init() {
   ALL_METHODS = []string{GET, HEAD, POST, CONNECT, DELETE, OPTIONS, PUT, TRACE}
   
   defaultMimeTypes = make(map[string]string)
-  defaultMimeTypes[".htm"] = MIME_TYPE_TEXT_HTML
-  defaultMimeTypes[".html"] = MIME_TYPE_TEXT_HTML
+  defaultMimeTypes[".htm"] = MIME_TYPE_HTML
+  defaultMimeTypes[".html"] = MIME_TYPE_HTML
   defaultMimeTypes[".xhtml"] = MIME_TYPE_XHTML_XML
   defaultMimeTypes[".xml"] = MIME_TYPE_XML
   defaultMimeTypes[".css"] = MIME_TYPE_CSS

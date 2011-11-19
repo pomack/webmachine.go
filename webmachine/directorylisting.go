@@ -57,7 +57,7 @@ func NewJsonDirectoryListing(fullPath string, urlPath string) *JsonDirectoryList
 }
 
 func (p *JsonDirectoryListing) MediaType() string {
-  return "application/json"
+  return MIME_TYPE_JSON
 }
 
 func (p *JsonDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
@@ -118,7 +118,7 @@ func NewHtmlDirectoryListing(fullPath string, urlPath string) *HtmlDirectoryList
 }
 
 func (p *HtmlDirectoryListing) MediaType() string {
-  return "text/html"
+  return MIME_TYPE_HTML
 }
 
 func (p *HtmlDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {

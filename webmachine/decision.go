@@ -1140,7 +1140,7 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
   // TODO acceptHelper
   ct := p.req.Header().Get("Content-Type")
   if len(ct) == 0 {
-    ct = "application/octet-stream"
+    ct = MIME_TYPE_OCTET_STREAM
   }
   var ctAccepted []MediaTypeInputHandler
   var httpCode int

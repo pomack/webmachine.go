@@ -391,7 +391,7 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
       mediaType := mime.TypeByExtension(extension)
       if len(mediaType) == 0 {
         // default to text/plain
-        mediaType = "text/plain"
+        mediaType = MIME_TYPE_TEXT_PLAIN
       }
       fullFilename := path.Join(dir, filename)
       tempFrc := NewFileResourceContextWithPath(fullFilename)
@@ -402,7 +402,7 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
     mediaType := mime.TypeByExtension(extension)
     if len(mediaType) == 0 {
       // default to text/plain
-      mediaType = "text/plain"
+      mediaType = MIME_TYPE_TEXT_PLAIN
     }
     arr = []MediaTypeHandler{NewPassThroughMediaTypeHandler(mediaType, frc, frc.Len(), frc.LastModified())}
   }
@@ -417,7 +417,7 @@ func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTy
     mediaType := mime.TypeByExtension(extension)
     if len(mediaType) == 0 {
       // default to text/plain
-      mediaType = "text/plain"
+      mediaType = MIME_TYPE_TEXT_PLAIN
     }
   }
   knownContentLengthStr, ok := req.Header()["Content-Length"]
@@ -475,7 +475,7 @@ func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, http.Hea
       mediaType := mime.TypeByExtension(extension)
       if len(mediaType) == 0 {
         // default to text/plain
-        mediaType = "text/plain"
+        mediaType = MIME_TYPE_TEXT_PLAIN
       }
       contentTypeToFilename[mediaType] = filename
       contentTypes[i] = mediaType

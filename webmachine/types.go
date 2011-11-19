@@ -3,6 +3,7 @@ package webmachine
 import (
   "container/vector"
   "http"
+  "url"
   "io"
   "os"
   "time"
@@ -15,7 +16,7 @@ type Flusher interface {
 type Request interface {
   Method() string  // GET, POST, PUT, etc.
   RawURL() string  // The raw URL given in the request
-  URL() *http.URL  // Parsed URL
+  URL() *url.URL  // Parsed URL
   Proto() string   // "HTTP/1.0"
   ProtoMajor() int // 1
   ProtoMinor() int // 0

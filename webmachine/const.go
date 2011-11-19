@@ -125,8 +125,8 @@ func init() {
   defaultMimeTypes[".text"] = "text/plain"
   defaultMimeTypes[".csv"] = "text/csv"
   
-  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE = template.MustParse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING, nil)
-  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE = template.MustParse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING, nil)
+  HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE, _ = template.New("directory_listing_success").Parse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING)
+  HTML_DIRECTORY_LISTING_ERROR_TEMPLATE, _ = template.New("directory_listing_error").Parse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING)
 }
 
 func (p WMDecision) String() string {

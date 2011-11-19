@@ -2,6 +2,7 @@ package webmachine
 
 import (
   "http"
+  "url"
   "io"
   "os"
   "strings"
@@ -24,7 +25,7 @@ func (p *request) RawURL() string {
   return p.req.RawURL
 }
 
-func (p *request) URL() *http.URL {
+func (p *request) URL() *url.URL {
   return p.req.URL
 }
 

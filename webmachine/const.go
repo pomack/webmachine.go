@@ -91,6 +91,30 @@ const (
   HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>Error in Directory Listing</title>\n  </head>\n  <body>\n    <h1>Error in Directory Listing</h1>\n    <p>While accessing <code>{Path}</code></p>\n    <h4>Error</h4>\n    <p>{Message}</p>\n  </body>\n</html>"
 )
 
+const (
+    MIME_TYPE_TEXT_HTML = "text/html"
+    MIME_TYPE_XHTML_XML = "application/xhtml+xml"
+    MIME_TYPE_XML = "application/xml"
+    MIME_TYPE_CSS = "text/css"
+    MIME_TYPE_JAVASCRIPT = "application/x-javascript"
+    MIME_TYPE_JSON = "application/json"
+    MIME_TYPE_JPEG = "image/jpeg"
+    MIME_TYPE_GIF = "image/gif"
+    MIME_TYPE_PNG = "image/png"
+    MIME_TYPE_ICO = "image/x-icon"
+    MIME_TYPE_SWF = "application/x-shockwave-flash"
+    MIME_TYPE_ZIP = "application/zip"
+    MIME_TYPE_BZIP2 = "application/x-bzip2"
+    MIME_TYPE_GZ = "application/x-gzip"
+    MIME_TYPE_TAR = "application/x-tar"
+    MIME_TYPE_COMPONENT = "text/x-component"
+    MIME_TYPE_CACHE_MANIFEST = "text/cache-manifest"
+    MIME_TYPE_SVG = "image/svg+xml"
+    MIME_TYPE_TEXT_PLAIN = "text/plain"
+    MIME_TYPE_CSV = "text/csv"
+)
+
+
 var (
   defaultMimeTypes map[string]string
 )
@@ -100,30 +124,30 @@ func init() {
   ALL_METHODS = []string{GET, HEAD, POST, CONNECT, DELETE, OPTIONS, PUT, TRACE}
   
   defaultMimeTypes = make(map[string]string)
-  defaultMimeTypes[".htm"] = "text/html"
-  defaultMimeTypes[".html"] = "text/html"
-  defaultMimeTypes[".xhtml"] = "application/xhtml+xml"
-  defaultMimeTypes[".xml"] = "application/xml"
-  defaultMimeTypes[".css"] = "text/css"
-  defaultMimeTypes[".js"] = "application/x-javascript"
-  defaultMimeTypes[".json"] = "application/json"
-  defaultMimeTypes[".jpg"] = "image/jpeg"
-  defaultMimeTypes[".jpeg"] = "image/jpeg"
-  defaultMimeTypes[".gif"] = "image/gif"
-  defaultMimeTypes[".png"] = "image/png"
-  defaultMimeTypes[".ico"] = "image/x-icon"
-  defaultMimeTypes[".swf"] = "application/x-shockwave-flash"
-  defaultMimeTypes[".zip"] = "application/zip"
-  defaultMimeTypes[".bz2"] = "application/x-bzip2"
-  defaultMimeTypes[".gz"] = "application/x-gzip"
-  defaultMimeTypes[".tar"] = "application/x-tar"
-  defaultMimeTypes[".tgz"] = "application/x-gzip"
-  defaultMimeTypes[".htc"] = "text/x-component"
-  defaultMimeTypes[".manifest"] = "text/cache-manifest"
-  defaultMimeTypes[".svg"] = "image/svg+xml"
-  defaultMimeTypes[".txt"] = "text/plain"
-  defaultMimeTypes[".text"] = "text/plain"
-  defaultMimeTypes[".csv"] = "text/csv"
+  defaultMimeTypes[".htm"] = MIME_TYPE_TEXT_HTML
+  defaultMimeTypes[".html"] = MIME_TYPE_TEXT_HTML
+  defaultMimeTypes[".xhtml"] = MIME_TYPE_XHTML_XML
+  defaultMimeTypes[".xml"] = MIME_TYPE_XML
+  defaultMimeTypes[".css"] = MIME_TYPE_CSS
+  defaultMimeTypes[".js"] = MIME_TYPE_JAVASCRIPT
+  defaultMimeTypes[".json"] = MIME_TYPE_JSON
+  defaultMimeTypes[".jpg"] = MIME_TYPE_JPEG
+  defaultMimeTypes[".jpeg"] = MIME_TYPE_JPEG
+  defaultMimeTypes[".gif"] = MIME_TYPE_GIF
+  defaultMimeTypes[".png"] = MIME_TYPE_PNG
+  defaultMimeTypes[".ico"] = MIME_TYPE_ICO
+  defaultMimeTypes[".swf"] = MIME_TYPE_SWF
+  defaultMimeTypes[".zip"] = MIME_TYPE_ZIP
+  defaultMimeTypes[".bz2"] = MIME_TYPE_BZIP2
+  defaultMimeTypes[".gz"] = MIME_TYPE_GZ
+  defaultMimeTypes[".tar"] = MIME_TYPE_TAR
+  defaultMimeTypes[".tgz"] = MIME_TYPE_GZ
+  defaultMimeTypes[".htc"] = MIME_TYPE_COMPONENT
+  defaultMimeTypes[".manifest"] = MIME_TYPE_CACHE_MANIFEST
+  defaultMimeTypes[".svg"] = MIME_TYPE_SVG
+  defaultMimeTypes[".txt"] = MIME_TYPE_TEXT_PLAIN
+  defaultMimeTypes[".text"] = MIME_TYPE_TEXT_PLAIN
+  defaultMimeTypes[".csv"] = MIME_TYPE_CSV
   
   HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE, _ = template.New("directory_listing_success").Parse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING)
   HTML_DIRECTORY_LISTING_ERROR_TEMPLATE, _ = template.New("directory_listing_error").Parse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING)

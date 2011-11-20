@@ -360,7 +360,7 @@ func (p *FileResource) ProcessPost(req Request, cxt Context) (bool, Request, Con
     // TODO handle POST
     mths, req, cxt, code, err := p.ContentTypesAccepted(req, cxt)
     if len(mths) > 0 {
-        buf := bytes.NewBuffer(make([]byte, 4096))
+        buf := bytes.NewBuffer(make([]byte, 0))
         httpCode, _, httpError := mths[0].OutputTo(req, cxt, buf)
         if httpCode > 0 {
             if httpError == nil && buf.Len() > 0 {

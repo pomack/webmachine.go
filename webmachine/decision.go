@@ -1215,7 +1215,7 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
     for i := 0; i < len(arr); i++ {
         if arr[i] == mt {
             log.Print("[AH]: Capturing accepted value of type ", mt)
-            buf = bytes.NewBuffer(make([]byte, 4096))
+            buf = bytes.NewBuffer(make([]byte, 0))
             httpCode, httpHeaders, httpError = ctAccepted[i].OutputTo(p.req, p.cxt, buf)
             break
         }

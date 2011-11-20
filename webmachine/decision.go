@@ -576,23 +576,23 @@ func (p *wmDecisionCore) doV3f7() WMDecision {
     }
     return v3g7
     /*
-      arr, _ := p.req.Header()["Accept-Encoding"]
-      var handlers []EncodingHandler
-      var httpCode int
-      var httpError os.Error
-      handlers, p.req, p.cxt, httpCode, httpError = p.handler.EncodingsProvided(arr, p.req, p.cxt)
-      log.Print("[WDC]: Accept-Encoding: \"", arr, "\" vs handlers: ", handlers)
-      if len(handlers) > 0 {
-        p.encodingOutputHandler = handlers[0]
-        p.encoding = handlers[0].Encoding()
-        return v3g7
-      }
-      if httpCode > 0 {
-        p.writeHaltOrError(httpCode, httpError)
-        return wmResponded
-      }
-      p.resp.WriteHeader(406)
-      return wmResponded
+       arr, _ := p.req.Header()["Accept-Encoding"]
+       var handlers []EncodingHandler
+       var httpCode int
+       var httpError os.Error
+       handlers, p.req, p.cxt, httpCode, httpError = p.handler.EncodingsProvided(arr, p.req, p.cxt)
+       log.Print("[WDC]: Accept-Encoding: \"", arr, "\" vs handlers: ", handlers)
+       if len(handlers) > 0 {
+         p.encodingOutputHandler = handlers[0]
+         p.encoding = handlers[0].Encoding()
+         return v3g7
+       }
+       if httpCode > 0 {
+         p.writeHaltOrError(httpCode, httpError)
+         return wmResponded
+       }
+       p.resp.WriteHeader(406)
+       return wmResponded
     */
 }
 

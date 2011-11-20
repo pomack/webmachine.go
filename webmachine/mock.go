@@ -9,18 +9,18 @@ import (
 )
 
 type MockResponseWriter struct {
-    Headers         http.Header     `json:"headers,omitempty"`
-    Buffer          *bytes.Buffer   `json:"buffer,omitempty"`
-    StatusCode      int             `json:"status_code,omitempty"`
-    Request         *http.Request   `json:"request,omitempty"`
+    Headers    http.Header   `json:"headers,omitempty"`
+    Buffer     *bytes.Buffer `json:"buffer,omitempty"`
+    StatusCode int           `json:"status_code,omitempty"`
+    Request    *http.Request `json:"request,omitempty"`
 }
 
 func NewMockResponseWriter(request *http.Request) *MockResponseWriter {
     return &MockResponseWriter{
-        Headers: make(http.Header),
-        Buffer: bytes.NewBufferString(""),
+        Headers:    make(http.Header),
+        Buffer:     bytes.NewBufferString(""),
         StatusCode: 0,
-        Request: request,
+        Request:    request,
     }
 }
 
@@ -68,4 +68,3 @@ func (p *MockResponseWriter) String() string {
 func (p *MockResponseWriter) ResponseWriter() http.ResponseWriter {
     return p
 }
-

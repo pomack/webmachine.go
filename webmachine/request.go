@@ -16,6 +16,10 @@ func NewRequestFromHttpRequest(req *http.Request) Request {
     return p
 }
 
+func (p *request) UnderlyingRequest() *http.Request {
+    return p.req
+}
+
 func (p *request) Method() string {
     return p.req.Method
 }

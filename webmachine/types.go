@@ -14,6 +14,7 @@ type Flusher interface {
 }
 
 type Request interface {
+    UnderlyingRequest() *http.Request
     Method() string  // GET, POST, PUT, etc.
     RawURL() string  // The raw URL given in the request
     URL() *url.URL   // Parsed URL

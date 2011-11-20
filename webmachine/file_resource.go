@@ -406,7 +406,7 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
 
 func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error) {
     frc := cxt.(FileResourceContext)
-    mediaType := req.Header()["Content-Type"]
+    mediaType := req.Header().Get("Content-Type")
     if len(mediaType) == 0 {
         extension := path.Ext(frc.FullPath())
         mediaType := mime.TypeByExtension(extension)
@@ -415,16 +415,16 @@ func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTy
             mediaType = MIME_TYPE_TEXT_PLAIN
         }
     }
-    knownContentLengthStr, ok := req.Header()["Content-Length"]
+    knownContentLengthStr := req.Header().Get("Content-Length")
     knownContentLength := int64(-1)
-    if ok {
+    if len(knownContentLengthStr) > 0 {
         var err os.Error
-        knownContentLength, err = strconv.Atoi64(knownContentLengthStr[0])
+        knownContentLength, err = strconv.Atoi64(knownContentLengthStr)
         if err != nil {
             knownContentLength = -1
         }
     }
-    arr := []MediaTypeInputHandler{NewPassThroughMediaTypeInputHandler(mediaType[0], "", "", frc.FullPath(), path.Join(p.urlPathPrefix, path.Base(frc.FullPath())), false, knownContentLength, req.Body())}
+    arr := []MediaTypeInputHandler{NewPassThroughMediaTypeInputHandler(mediaType, "", "", frc.FullPath(), path.Join(p.urlPathPrefix, path.Base(frc.FullPath())), false, knownContentLength, req.Body())}
     return arr, req, cxt, 0, nil
 }
 

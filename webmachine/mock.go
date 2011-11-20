@@ -15,7 +15,7 @@ type MockResponseWriter struct {
     Request         *http.Request   `json:"request,omitempty"`
 }
 
-func NewMockResponseWriter(request *http.Request) http.ResponseWriter {
+func NewMockResponseWriter(request *http.Request) *MockResponseWriter {
     return &MockResponseWriter{
         Headers: make(http.Header),
         Buffer: bytes.NewBufferString(""),
@@ -63,5 +63,9 @@ func (p *MockResponseWriter) String() string {
     resp.Request = p.Request
     b, _ := http.DumpResponse(resp, true)
     return string(b)
+}
+
+func (p *MockResponseWriter) ResponseWriter() http.ResponseWriter {
+    return p
 }
 

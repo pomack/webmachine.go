@@ -10,6 +10,7 @@ GOFILES=\
 	directorylisting.go\
 	encoders.go\
 	file_resource.go\
+	mock.go\
 	passthroughmediatypehandler.go\
 	passthroughmediatypeinputhandler.go\
 	request.go\

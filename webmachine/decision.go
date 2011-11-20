@@ -1084,8 +1084,14 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
     if httpHeaders != nil {
         headers := p.resp.Header()
         for k, v := range httpHeaders {
-            for _, v1 := range v {
-                headers.Add(k, v1)
+            if headers.Get(k) != "" {
+                for _, v1 := range v {
+                    headers.Set(k, v1)
+                }
+            } else {
+                for _, v1 := range v {
+                    headers.Add(k, v1)
+                }
             }
         }
     }
@@ -1223,8 +1229,14 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
     if httpHeaders != nil {
         headers := p.resp.Header()
         for k, v := range httpHeaders {
-            for _, v1 := range v {
-                headers.Add(k, v1)
+            if headers.Get(k) != "" {
+                for _, v1 := range v {
+                    headers.Set(k, v1)
+                }
+            } else {
+                for _, v1 := range v {
+                    headers.Add(k, v1)
+                }
             }
         }
     }

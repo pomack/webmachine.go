@@ -988,17 +988,20 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
         return wmResponded
     }
     if postIsCreate {
+        log.Print("[WM]: v3n11: Creating Path\n")
         _, p.req, p.cxt, httpCode, httpError = p.handler.CreatePath(p.req, p.cxt)
         if httpCode > 0 {
             p.writeHaltOrError(httpCode, httpError)
             return wmResponded
         }
+        log.Print("[WM]: v3n11: Running Accept Helper\n")
         n, err := p.acceptHelper()
         if err != nil {
             p.resp.WriteHeader(n)
             io.WriteString(p.resp, err.String())
             return wmResponded
         }
+        log.Print("[WM]: v3n11: Running Process Post\n")
         _, p.req, p.cxt, httpCode, httpError = p.handler.ProcessPost(p.req, p.cxt)
         if httpCode > 0 {
             p.writeHaltOrError(httpCode, httpError)
@@ -1009,6 +1012,7 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
         //log.Print("Wrote Header but may not return wmResponded in doV3n11()\n")
         //p.encodeBodyIfSet()
     }
+    log.Print("[WM]: v3n11: Running Response is Redirect?\n")
     var respIsRedirect bool
     respIsRedirect, p.req, p.cxt, httpCode, httpError = p.handler.ResponseIsRedirect(p.req, p.cxt)
     if httpCode > 0 {

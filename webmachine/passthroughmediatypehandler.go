@@ -93,7 +93,7 @@ func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer 
         return
     }
     currentOffset := int64(0)
-    log.Print("[PTMTH]: Writer ", writer, "\n[PTMTH]: Reader ", p.reader, "\n[PTMTH]: numBytes ", p.numberOfBytes, "\n[PTMTH]: currentOffset ", currentOffset, "\n")
+    //log.Print("[PTMTH]: Writer ", writer, "\n[PTMTH]: Reader ", p.reader, "\n[PTMTH]: numBytes ", p.numberOfBytes, "\n[PTMTH]: currentOffset ", currentOffset, "\n")
     for currentOffset < int64(p.numberOfBytes) {
         bytesToSend := p.numberOfBytes - currentOffset
         data := make([]byte, bytesToSend+10000)

@@ -2,7 +2,7 @@ package webmachine
 
 import (
     "io"
-    "log"
+    //"log"
     "strconv"
     "time"
     "os"
@@ -102,7 +102,7 @@ func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer 
         if err != nil {
             return
         }
-        log.Print("[PTMTH]: About to write ", len(data[0:bytesToSend]), " bytes to the writer\n")
+        //log.Print("[PTMTH]: About to write ", len(data[0:bytesToSend]), " bytes to the writer\n")
         _, err = writer.Write(data[0:bytesToSend])
         if err != nil {
             return

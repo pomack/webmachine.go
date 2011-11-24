@@ -1079,7 +1079,7 @@ func (p *wmDecisionCore) doV3o16() WMDecision {
 // Also where body generation for GET and HEAD is done
 func (p *wmDecisionCore) doV3o18() WMDecision {
     method := p.req.Method()
-    buildBody := method == GET || method == HEAD
+    buildBody := method == GET || method == HEAD || p.handler.HasRespBody(p.req, p.cxt)
     var multipleChoices bool
     var httpCode int
     var httpError os.Error

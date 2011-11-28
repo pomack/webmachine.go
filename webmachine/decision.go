@@ -273,10 +273,9 @@ func (p *wmDecisionCore) doV3b10() WMDecision {
             return v3b9
         }
     }
+    p.resp.Header().Set("ALLOW", strings.Join(allowedMethods, ", "))
     p.resp.WriteHeader(405)
-    s := "ALLOW " + strings.Join(allowedMethods, ",")
-    // TODO handle error
-    p.resp.Write([]byte(s))
+    p.resp.Flush()
     return wmResponded
 }
 

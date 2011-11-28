@@ -412,7 +412,7 @@ func (p *wmDecisionCore) doV3c3() WMDecision {
             // TODO Default is "text/html" and to_html
             p.mediaTypeOutputHandler = provided[0]
         }
-        p.mediaType = p.mediaTypeOutputHandler.MediaType()
+        p.mediaType = p.mediaTypeOutputHandler.MediaTypeOutput()
         p.resp.Header().Set("Content-Type", p.mediaType)
         _, params := mime.ParseMediaType(p.mediaType)
         if charset, ok := params["charset"]; ok {
@@ -436,7 +436,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
     }
     mediaTypesProvided := make([]string, len(provided))
     for i, mth := range provided {
-        mediaTypesProvided[i] = mth.MediaType()
+        mediaTypesProvided[i] = mth.MediaTypeOutput()
     }
     bestMatch := chooseMediaType(mediaTypesProvided, arr[0])
     log.Print("[WDC]: Chose Media Type \"", bestMatch, "\" with accept ", arr, " and provided ", mediaTypesProvided)
@@ -449,7 +449,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
             p.charset = charset
         }
         for _, mth := range provided {
-            if mediaType == mth.MediaType() {
+            if mediaType == mth.MediaTypeOutput() {
                 p.mediaTypeOutputHandler = mth
                 break
             }
@@ -543,7 +543,7 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
         }
     }
     headers := p.resp.Header()
-    headers.Set("Content-Type", ctype.MediaType()+cs)
+    headers.Set("Content-Type", ctype.MediaTypeOutput()+cs)
     if arr, ok := p.req.Header()["Accept-Encoding"]; ok && len(arr) > 0 {
         return v3f7
     }
@@ -980,6 +980,8 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
     var postIsCreate bool
     var httpCode int
     var httpError os.Error
+    var httpHeaders http.Header
+    var writerTo io.WriterTo
     postIsCreate, p.req, p.cxt, httpCode, httpError = p.handler.PostIsCreate(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -993,17 +995,19 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
             return wmResponded
         }
         log.Print("[WM]: v3n11: Running Accept Helper\n")
-        n, err := p.acceptHelper()
-        if err != nil {
-            p.resp.WriteHeader(n)
-            io.WriteString(p.resp, err.String())
+        if p.runAcceptHelper() {
             return wmResponded
         }
     } else {
         log.Print("[WM]: v3n11: Running Process Post\n")
-        _, p.req, p.cxt, httpCode, httpError = p.handler.ProcessPost(p.req, p.cxt)
+        p.req, p.cxt, httpCode, httpHeaders, writerTo, httpError = p.handler.ProcessPost(p.req, p.cxt)
         if httpCode > 0 {
-            p.writeHaltOrError(httpCode, httpError)
+            p.updateHttpResponseHeaders(httpHeaders)
+            if httpError != nil {
+                p.writeHaltOrError(httpCode, httpError)
+            } else if writerTo != nil {
+                writerTo.WriteTo(p.resp)
+            }
             return wmResponded
         }
         // TODO Aalok check what should be done here
@@ -1053,14 +1057,7 @@ func (p *wmDecisionCore) doV3o14() WMDecision {
         p.resp.WriteHeader(409)
         return wmResponded
     }
-    code, err := p.acceptHelper()
-    if err != nil {
-        p.resp.WriteHeader(code)
-        io.WriteString(p.resp, err.String())
-        return wmResponded
-    }
-    if code > 0 {
-        p.resp.WriteHeader(code)
+    if p.runAcceptHelper() {
         return wmResponded
     }
     return v3p11
@@ -1083,29 +1080,11 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
     var httpCode int
     var httpError os.Error
     var httpHeaders http.Header
-    multipleChoices, httpHeaders, p.req, p.cxt, httpCode, httpError = p.handler.MultipleChoices(p.req, p.cxt)
-    if httpHeaders != nil {
-        headers := p.resp.Header()
-        for k, v := range httpHeaders {
-            if headers.Get(k) != "" {
-                for _, v1 := range v {
-                    headers.Set(k, v1)
-                }
-            } else {
-                for _, v1 := range v {
-                    headers.Add(k, v1)
-                }
-            }
-        }
-    }
-    if httpCode > 0 {
-        p.writeHaltOrError(httpCode, httpError)
-        return wmResponded
-    }
     if buildBody {
         var etag string
         var httpCode int
         var httpError os.Error
+        var lastModified, expires *time.Time
         etag, p.req, p.cxt, httpCode, httpError = p.handler.GenerateETag(p.req, p.cxt)
         if httpCode > 0 {
             p.writeHaltOrError(httpCode, httpError)
@@ -1114,7 +1093,6 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
         if len(etag) > 0 {
             p.resp.Header().Set("ETag", strconv.Quote(etag))
         }
-        var lastModified, expires *time.Time
         lastModified, p.req, p.cxt, httpCode, httpError = p.handler.LastModified(p.req, p.cxt)
         if lastModified != nil {
             p.resp.Header().Set("Last-Modified", lastModified.Format(http.TimeFormat))
@@ -1124,7 +1102,7 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
             p.resp.Header().Set("Expires", expires.Format(http.TimeFormat))
         }
         if p.mediaTypeOutputHandler != nil {
-            p.mediaTypeOutputHandler.OutputTo(p.req, p.cxt, p.resp, p.resp)
+            p.mediaTypeOutputHandler.MediaTypeHandleOutputTo(p.req, p.cxt, p.resp, p.resp)
             p.resp.Flush()
             return wmResponded
         } else {
@@ -1135,10 +1113,16 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
                 return wmResponded
             }
             if len(provided) > 0 && len(provided) == 1 {
-                provided[0].OutputTo(p.req, p.cxt, p.resp, p.resp)
+                provided[0].MediaTypeHandleOutputTo(p.req, p.cxt, p.resp, p.resp)
                 return wmResponded
             }
         }
+    }
+    multipleChoices, httpHeaders, p.req, p.cxt, httpCode, httpError = p.handler.MultipleChoices(p.req, p.cxt)
+    p.updateHttpResponseHeaders(httpHeaders)
+    if httpCode > 0 {
+        p.writeHaltOrError(httpCode, httpError)
+        return wmResponded
     }
     if multipleChoices {
         p.resp.WriteHeader(300)
@@ -1173,15 +1157,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
         p.resp.WriteHeader(409)
         return wmResponded
     }
-    code, err := p.acceptHelper()
-    log.Print("[WDC]: V3P3: acceptHelper code: ", code, ", err: ", err)
-    if err != nil {
-        p.resp.WriteHeader(code)
-        io.WriteString(p.resp, err.String())
-        return wmResponded
-    }
-    if code > 0 {
-        p.resp.WriteHeader(code)
+    if p.runAcceptHelper() {
         return wmResponded
     }
     return v3p11
@@ -1196,40 +1172,7 @@ func (p *wmDecisionCore) doV3p11() WMDecision {
     return v3o20
 }
 
-func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
-    // TODO acceptHelper
-    ct := p.req.Header().Get("Content-Type")
-    if len(ct) == 0 {
-        ct = MIME_TYPE_OCTET_STREAM
-    }
-    var ctAccepted []MediaTypeInputHandler
-    var httpCode int
-    var httpHeaders http.Header
-    var httpError os.Error
-    var buf *bytes.Buffer
-    ctAccepted, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesAccepted(p.req, p.cxt)
-    if httpCode > 0 {
-        p.writeHaltOrError(httpCode, httpError)
-        return httpCode, nil
-    }
-    arrLen := len(ctAccepted)
-    arr := make([]string, arrLen)
-    for i := 0; i < arrLen; i++ {
-        arr[i] = ctAccepted[i].MediaType()
-    }
-    mt := chooseMediaType(arr, ct)
-    acceptArr := splitAcceptString(mt)
-    if len(acceptArr) == 0 {
-        return 415, nil
-    }
-    for i := 0; i < arrLen; i++ {
-        if arr[i] == mt {
-            log.Print("[AH]: Capturing accepted value of type ", mt)
-            buf = bytes.NewBuffer(make([]byte, 0))
-            httpCode, httpHeaders, httpError = ctAccepted[i].OutputTo(p.req, p.cxt, buf)
-            break
-        }
-    }
+func (p *wmDecisionCore) updateHttpResponseHeaders(httpHeaders http.Header) {
     if httpHeaders != nil {
         headers := p.resp.Header()
         for k, v := range httpHeaders {
@@ -1244,11 +1187,59 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
             }
         }
     }
-    log.Print("[AH]: Done capturing input stream of type ", mt)
-    if httpError == nil {
-        return httpCode, buf
+}
+
+func (p *wmDecisionCore) runAcceptHelper() (haveResponded bool) {
+    httpCode, httpHeaders, writerTo := p.acceptHelper()
+    if httpCode > 0 {
+        p.updateHttpResponseHeaders(httpHeaders)
+        p.resp.WriteHeader(httpCode)
+        if writerTo != nil {
+            writerTo.WriteTo(p.resp)
+        }
+        p.resp.Flush()
+        haveResponded = true
     }
-    return httpCode, httpError
+    return
+}
+
+func (p *wmDecisionCore) acceptHelper() (int, http.Header, io.WriterTo) {
+    ct := p.req.Header().Get("Content-Type")
+    if len(ct) == 0 {
+        ct = MIME_TYPE_OCTET_STREAM
+    }
+    var ctAccepted []MediaTypeInputHandler
+    var httpCode int
+    var httpHeaders http.Header
+    var httpError os.Error
+    var writerTo io.WriterTo
+    ctAccepted, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesAccepted(p.req, p.cxt)
+    if httpCode > 0 {
+        if httpError != nil {
+            return httpCode, nil, bytes.NewBufferString(httpError.String())
+        } else {
+            return httpCode, nil, nil
+        }
+    }
+    arrLen := len(ctAccepted)
+    arr := make([]string, arrLen)
+    for i := 0; i < arrLen; i++ {
+        arr[i] = ctAccepted[i].MediaTypeInput()
+    }
+    mt := chooseMediaType(arr, ct)
+    acceptArr := splitAcceptString(mt)
+    if len(acceptArr) == 0 {
+        return 415, nil, nil
+    }
+    for i := 0; i < arrLen; i++ {
+        if arr[i] == mt {
+            log.Print("[AH]: Capturing accepted value of type ", mt)
+            httpCode, httpHeaders, writerTo = ctAccepted[i].MediaTypeHandleInputFrom(p.req, p.cxt)
+            break
+        }
+    }
+    log.Print("[AH]: Done capturing input stream of type ", mt)
+    return httpCode, httpHeaders, writerTo
 }
 
 func (p *wmDecisionCore) encodeBodyIfSet() bool {
@@ -1256,7 +1247,7 @@ func (p *wmDecisionCore) encodeBodyIfSet() bool {
         return false
     }
     bodyWriter, _ := p.bodyEncoder(p.resp)
-    p.mediaTypeOutputHandler.OutputTo(p.req, p.cxt, bodyWriter, p.resp)
+    p.mediaTypeOutputHandler.MediaTypeHandleOutputTo(p.req, p.cxt, bodyWriter, p.resp)
     return true
 }
 

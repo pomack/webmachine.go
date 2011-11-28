@@ -547,8 +547,7 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
     if arr, ok := p.req.Header()["Accept-Encoding"]; ok && len(arr) > 0 {
         return v3f7
     }
-    arr := make([]string, 1)
-    arr[0] = "identity;q=1.0,*;q=0.5"
+    arr := []string{"identity;q=1.0,*;q=0.5"}
     var handlers []EncodingHandler
     var httpCode int
     var httpError os.Error
@@ -1044,7 +1043,7 @@ func (p *wmDecisionCore) doV3o14() WMDecision {
     var isConflict bool
     var httpCode int
     var httpError os.Error
-    // TOOD v3n11
+    // TODO v3n11
     isConflict, p.req, p.cxt, httpCode, httpError = p.handler.IsConflict(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -1213,8 +1212,9 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
         p.writeHaltOrError(httpCode, httpError)
         return httpCode, nil
     }
-    arr := make([]string, len(ctAccepted))
-    for i := 0; i < len(arr); i++ {
+    arrLen := len(ctAccepted)
+    arr := make([]string, arrLen)
+    for i := 0; i < arrLen; i++ {
         arr[i] = ctAccepted[i].MediaType()
     }
     mt := chooseMediaType(arr, ct)
@@ -1222,7 +1222,7 @@ func (p *wmDecisionCore) acceptHelper() (int, os.Error) {
     if len(acceptArr) == 0 {
         return 415, nil
     }
-    for i := 0; i < len(arr); i++ {
+    for i := 0; i < arrLen; i++ {
         if arr[i] == mt {
             log.Print("[AH]: Capturing accepted value of type ", mt)
             buf = bytes.NewBuffer(make([]byte, 0))

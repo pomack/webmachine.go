@@ -1000,6 +1000,7 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
             io.WriteString(p.resp, err.String())
             return wmResponded
         }
+    } else {
         log.Print("[WM]: v3n11: Running Process Post\n")
         _, p.req, p.cxt, httpCode, httpError = p.handler.ProcessPost(p.req, p.cxt)
         if httpCode > 0 {

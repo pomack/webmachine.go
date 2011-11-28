@@ -2,6 +2,7 @@ package webmachine
 
 import (
     "http"
+    "io"
     "os"
     "time"
 )
@@ -124,8 +125,8 @@ func (p *DefaultRequestHandler) CreatePath(req Request, cxt Context) (string, Re
     return "", req, cxt, 0, nil
 }
 
-func (p *DefaultRequestHandler) ProcessPost(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
-    return false, req, cxt, 0, nil
+func (p *DefaultRequestHandler) ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, os.Error) {
+    return req, cxt, 0, nil, nil, nil
 }
 
 func (p *DefaultRequestHandler) IsConflict(req Request, cxt Context) (bool, Request, Context, int, os.Error) {

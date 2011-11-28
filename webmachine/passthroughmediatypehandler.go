@@ -25,11 +25,11 @@ func NewPassThroughMediaTypeHandler(mediaType string, reader io.ReadCloser, numb
     }
 }
 
-func (p *PassThroughMediaTypeHandler) MediaType() string {
+func (p *PassThroughMediaTypeHandler) MediaTypeOutput() string {
     return p.mediaType
 }
 
-func (p *PassThroughMediaTypeHandler) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+func (p *PassThroughMediaTypeHandler) MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
     if !p.writtenStatusHeader {
         resp.WriteHeader(200)
         p.writtenStatusHeader = true

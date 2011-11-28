@@ -9,6 +9,30 @@ import (
     "os"
 )
 
+
+type jsonWriter struct {
+    obj interface{}
+}
+
+func newJSONWriter(obj interface{}) *jsonWriter {
+    return &jsonWriter{obj:obj}
+}
+
+func (p *jsonWriter) WriteTo(writer io.Writer) (n int64, err os.Error) {
+    w := json.NewEncoder(writer)
+    err = w.Encode(p.obj)
+    return
+}
+
+func (p *jsonWriter) String() string {
+    b, err := json.Marshal(p.obj)
+    if err != nil {
+        return err.String()
+    }
+    return string(b)
+}
+
+
 type PassThroughMediaTypeInputHandler struct {
     mediaType           string
     charset             string
@@ -34,15 +58,14 @@ func NewPassThroughMediaTypeInputHandler(mediaType, charset, language, filename,
     }
 }
 
-func (p *PassThroughMediaTypeInputHandler) MediaType() string {
+func (p *PassThroughMediaTypeInputHandler) MediaTypeInput() string {
     return p.mediaType
 }
 
-func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, writer io.Writer) (int, http.Header, os.Error) {
+func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request, cxt Context) (int, http.Header, io.WriterTo) {
     fileInfo, err := os.Stat(p.filename)
     var file *os.File
     m := make(map[string]string)
-    w := json.NewEncoder(writer)
     dirname, _ := path.Split(p.filename)
     file = nil
     defer func() {
@@ -58,8 +81,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            w.Encode(m)
-            return 500, headers, err
+            return 500, headers, newJSONWriter(m)
         }
         if file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
             log.Print("[PTMTIH]: Unable to create file named: \"", p.filename, "\" due to error: ", err)
@@ -68,8 +90,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            w.Encode(m)
-            return 500, headers, err
+            return 500, headers, newJSONWriter(m)
         }
     } else {
         if p.append {
@@ -84,8 +105,7 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            w.Encode(m)
-            return 500, headers, err
+            return 500, headers, newJSONWriter(m)
         }
     }
     var n int64
@@ -101,14 +121,12 @@ func (p *PassThroughMediaTypeInputHandler) OutputTo(req Request, cxt Context, wr
         m["status"] = "error"
         m["message"] = err.String()
         m["result"] = p.urlPath
-        w.Encode(m)
-        return 500, headers, err
+        return 500, headers, newJSONWriter(m)
     }
     headers := make(http.Header)
     //headers.Set("Content-Type", MIME_TYPE_JSON)
     m["status"] = "success"
     m["message"] = ""
     m["result"] = p.urlPath
-    w.Encode(m)
-    return 200, headers, nil
+    return 200, headers, newJSONWriter(m)
 }

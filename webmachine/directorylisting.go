@@ -56,11 +56,11 @@ func NewJsonDirectoryListing(fullPath string, urlPath string) *JsonDirectoryList
     return &JsonDirectoryListing{fullPath: fullPath, urlPath: urlPath}
 }
 
-func (p *JsonDirectoryListing) MediaType() string {
+func (p *JsonDirectoryListing) MediaTypeOutput() string {
     return MIME_TYPE_JSON
 }
 
-func (p *JsonDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+func (p *JsonDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
     result := new(jsonDirectoryEntryResult)
     result.Path = p.urlPath
     var err os.Error
@@ -116,11 +116,11 @@ func NewHtmlDirectoryListing(fullPath string, urlPath string) *HtmlDirectoryList
     return &HtmlDirectoryListing{fullPath: fullPath, urlPath: urlPath}
 }
 
-func (p *HtmlDirectoryListing) MediaType() string {
+func (p *HtmlDirectoryListing) MediaTypeOutput() string {
     return MIME_TYPE_HTML
 }
 
-func (p *HtmlDirectoryListing) OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
+func (p *HtmlDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
     result := new(htmlDirectoryEntryResult)
     result.Path = p.urlPath
     result.Tail = path.Base(p.urlPath)

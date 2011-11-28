@@ -52,13 +52,13 @@ type RouteHandler interface {
 }
 
 type MediaTypeHandler interface {
-    MediaType() string
-    OutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter)
+    MediaTypeOutput() string
+    MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter)
 }
 
 type MediaTypeInputHandler interface {
-    MediaType() string
-    OutputTo(req Request, cxt Context, writer io.Writer) (int, http.Header, os.Error)
+    MediaTypeInput() string
+    MediaTypeHandleInputFrom(req Request, cxt Context) (int, http.Header, io.WriterTo)
 }
 
 type CharsetHandler interface {
@@ -90,7 +90,7 @@ type RequestHandler interface {
     DeleteCompleted(req Request, cxt Context) (bool, Request, Context, int, os.Error)
     PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, os.Error)
     CreatePath(req Request, cxt Context) (string, Request, Context, int, os.Error)
-    ProcessPost(req Request, cxt Context) (bool, Request, Context, int, os.Error)
+    ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, os.Error)
     ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error)
     ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error)
     IsLanguageAvailable(languages []string, req Request, cxt Context) (bool, Request, Context, int, os.Error)

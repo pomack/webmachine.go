@@ -1,7 +1,6 @@
 package webmachine
 
 import (
-    "bytes"
     "container/list"
     "http"
     "io"
@@ -356,20 +355,14 @@ func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Co
     return frc.FullPath(), req, frc, 0, nil
 }
 
-func (p *FileResource) ProcessPost(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, os.Error) {
     // TODO handle POST
     mths, req, cxt, code, err := p.ContentTypesAccepted(req, cxt)
     if len(mths) > 0 {
-        buf := bytes.NewBuffer(make([]byte, 0))
-        httpCode, _, httpError := mths[0].OutputTo(req, cxt, buf)
-        if httpCode > 0 {
-            if httpError == nil && buf.Len() > 0 {
-                return false, req, cxt, httpCode, buf
-            }
-        }
-        return false, req, cxt, httpCode, httpError
+        httpCode, httpHeaders, writerTo := mths[0].MediaTypeHandleInputFrom(req, cxt)
+        return req, cxt, httpCode, httpHeaders, writerTo, nil
     }
-    return false, req, cxt, code, err
+    return req, cxt, code, nil, nil, err
 }
 
 func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {

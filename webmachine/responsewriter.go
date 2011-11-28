@@ -51,18 +51,10 @@ func (p *responseWriter) Flush() os.Error {
             log.Print("[RW]: Flushing Writer")
             return f.Flush()
         }
-        if c, ok := p.w.(io.Closer); ok {
-            log.Print("[RW]: Closing Writer on Flush")
-            return c.Close()
-        }
     }
     if f, ok := p.rw.(Flusher); ok {
         log.Print("[RW]: Flushing ResponseWriter")
         return f.Flush()
-    }
-    if c, ok := p.rw.(io.Closer); ok {
-        log.Print("[RW]: Closing ResponseWriter")
-        return c.Close()
     }
     log.Print("[RW]: Failed to Flush, not flushable")
     return nil

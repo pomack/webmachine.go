@@ -2,10 +2,11 @@ package webmachine
 
 import (
     "http"
-    "url"
     "io"
+    "mime/multipart"
     "os"
     "strings"
+    "url"
 )
 
 func NewRequestFromHttpRequest(req *http.Request) Request {
@@ -48,6 +49,10 @@ func (p *request) Header() http.Header {
     return p.req.Header
 }
 
+func (p *request) AddCookie(c *http.Cookie) {
+    p.req.AddCookie(c)
+}
+
 func (p *request) Cookie(name string) (*http.Cookie, os.Error) {
     return p.req.Cookie(name)
 }
@@ -86,6 +91,26 @@ func (p *request) UserAgent() string {
 
 func (p *request) Form() map[string][]string {
     return p.req.Form
+}
+
+func (p *request) FormFile(key string) (multipart.File, *multipart.FileHeader, os.Error) {
+    return p.req.FormFile(key)
+}
+
+func (p *request) FormValue(key string) string {
+    return p.req.FormValue(key)
+}
+
+func (p *request) MultipartReader() (*multipart.Reader, os.Error) {
+    return p.req.MultipartReader()
+}
+
+func (p *request) ParseForm() os.Error {
+    return p.req.ParseForm()
+}
+
+func (p *request) ParseMultipartForm(maxMemory int64) os.Error {
+    return p.req.ParseMultipartForm(maxMemory)
 }
 
 func (p *request) Trailer() http.Header {

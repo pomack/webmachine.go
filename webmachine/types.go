@@ -3,6 +3,7 @@ package webmachine
 import (
     "container/vector"
     "http"
+    "mime/multipart"
     "url"
     "io"
     "os"
@@ -23,6 +24,7 @@ type Request interface {
     ProtoMinor() int // 0
 
     Header() http.Header
+    AddCookie(c *http.Cookie)
     Cookie(name string) (*http.Cookie, os.Error)
     Cookies() []*http.Cookie
     Body() io.ReadCloser
@@ -33,8 +35,12 @@ type Request interface {
     Referer() string
     UserAgent() string
     Form() map[string][]string
+    FormFile(key string) (multipart.File, *multipart.FileHeader, os.Error)
+    FormValue(key string) string
+    MultipartReader() (*multipart.Reader, os.Error)
+    ParseForm() (err os.Error)
+    ParseMultipartForm(maxMemory int64) os.Error
     Trailer() http.Header
-
     HostParts() []string
     URLParts() []string
 }

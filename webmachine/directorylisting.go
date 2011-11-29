@@ -170,4 +170,5 @@ func (p *HtmlDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     result.Message = ""
     result.Result = entries
     HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE.Execute(writer, result)
+    return
 }

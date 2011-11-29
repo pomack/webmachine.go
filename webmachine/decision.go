@@ -199,7 +199,7 @@ func (p *wmDecisionCore) decision(decisionId WMDecision) WMDecision {
     case v3p11:
         nextDecision = p.doV3p11() // New resource?
     default:
-        p.resp.WriteHeader(501)
+        p.resp.WriteHeader(http.StatusNotImplemented)
         nextDecision = wmResponded
     }
     return nextDecision
@@ -209,7 +209,7 @@ func (p *wmDecisionCore) decision(decisionId WMDecision) WMDecision {
 func (p *wmDecisionCore) doV3b13() WMDecision {
     if p.req == nil || p.handler == nil || p.resp == nil {
         if p.resp != nil {
-            p.resp.WriteHeader(503)
+            p.resp.WriteHeader(http.StatusServiceUnavailable)
         }
         return wmResponded
     }
@@ -226,7 +226,7 @@ func (p *wmDecisionCore) doV3b13b() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(503)
+    p.resp.WriteHeader(http.StatusServiceUnavailable)
     return wmResponded
 }
 
@@ -238,7 +238,7 @@ func (p *wmDecisionCore) doV3b12() WMDecision {
             return v3b11
         }
     }
-    p.resp.WriteHeader(501)
+    p.resp.WriteHeader(http.StatusNotImplemented)
     return wmResponded
 }
 
@@ -248,7 +248,7 @@ func (p *wmDecisionCore) doV3b11() WMDecision {
     var httpCode int
     var httpError os.Error
     if tooLong, p.req, p.cxt, httpCode, httpError = p.handler.URITooLong(p.req, p.cxt); tooLong {
-        p.resp.WriteHeader(414)
+        p.resp.WriteHeader(http.StatusRequestURITooLong)
         return wmResponded
     } else if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -274,7 +274,7 @@ func (p *wmDecisionCore) doV3b10() WMDecision {
         }
     }
     p.resp.Header().Set("ALLOW", strings.Join(allowedMethods, ", "))
-    p.resp.WriteHeader(405)
+    p.resp.WriteHeader(http.StatusMethodNotAllowed)
     p.resp.Flush()
     return wmResponded
 }
@@ -285,7 +285,7 @@ func (p *wmDecisionCore) doV3b9() WMDecision {
     var httpCode int
     var httpError os.Error
     if isMalformed, p.req, p.cxt, httpCode, httpError = p.handler.MalformedRequest(p.req, p.cxt); isMalformed {
-        p.resp.WriteHeader(400)
+        p.resp.WriteHeader(http.StatusBadRequest)
         return wmResponded
     } else if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -308,7 +308,7 @@ func (p *wmDecisionCore) doV3b8() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(401)
+    p.resp.WriteHeader(http.StatusUnauthorized)
     return wmResponded
 }
 
@@ -318,7 +318,7 @@ func (p *wmDecisionCore) doV3b7() WMDecision {
     var httpCode int
     var httpError os.Error
     if forbidden, p.req, p.cxt, httpCode, httpError = p.handler.Forbidden(p.req, p.cxt); forbidden {
-        p.resp.WriteHeader(403)
+        p.resp.WriteHeader(http.StatusForbidden)
         return wmResponded
     } else if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -338,7 +338,7 @@ func (p *wmDecisionCore) doV3b6() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(501)
+    p.resp.WriteHeader(http.StatusNotImplemented)
     return wmResponded
 }
 
@@ -353,7 +353,7 @@ func (p *wmDecisionCore) doV3b5() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(415)
+    p.resp.WriteHeader(http.StatusUnsupportedMediaType)
     return wmResponded
 }
 
@@ -368,7 +368,7 @@ func (p *wmDecisionCore) doV3b4() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(413)
+    p.resp.WriteHeader(http.StatusRequestEntityTooLarge)
     return wmResponded
 }
 
@@ -383,7 +383,7 @@ func (p *wmDecisionCore) doV3b3() WMDecision {
             p.writeHaltOrError(httpCode, httpError)
             return wmResponded
         }
-        p.resp.WriteHeader(200)
+        p.resp.WriteHeader(http.StatusOK)
         s := strings.Join(arr, ",")
         // TODO handle write error
         io.WriteString(p.resp, s)
@@ -456,7 +456,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
         }
         return v3d4
     }
-    p.resp.WriteHeader(406)
+    p.resp.WriteHeader(http.StatusNotAcceptable)
     return wmResponded
 }
 
@@ -482,7 +482,7 @@ func (p *wmDecisionCore) doV3d5() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(406)
+    p.resp.WriteHeader(http.StatusNotAcceptable)
     return wmResponded
 }
 
@@ -503,7 +503,7 @@ func (p *wmDecisionCore) doV3e5() WMDecision {
         return wmResponded
     }
     if len(handlers) == 0 {
-        p.resp.WriteHeader(406)
+        p.resp.WriteHeader(http.StatusNotAcceptable)
         return wmResponded
     }
     p.charset = handlers[0].Charset()
@@ -523,7 +523,7 @@ func (p *wmDecisionCore) doV3e6() WMDecision {
         return wmResponded
     }
     if len(handlers) == 0 {
-        p.resp.WriteHeader(406)
+        p.resp.WriteHeader(http.StatusNotAcceptable)
         return wmResponded
     }
     p.charset = handlers[0].Charset()
@@ -561,7 +561,7 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    p.resp.WriteHeader(406)
+    p.resp.WriteHeader(http.StatusNotAcceptable)
     return wmResponded
     return v3g7
 }
@@ -569,7 +569,7 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
 // Acceptable Encoding available?
 func (p *wmDecisionCore) doV3f7() WMDecision {
     if len(p.chooseEncoding()) == 0 {
-        p.resp.WriteHeader(406)
+        p.resp.WriteHeader(http.StatusNotAcceptable)
         return wmResponded
     }
     return v3g7
@@ -649,14 +649,14 @@ func (p *wmDecisionCore) doV3g11() WMDecision {
             return wmResponded
         }
     }
-    p.resp.WriteHeader(412)
+    p.resp.WriteHeader(http.StatusPreconditionFailed)
     return wmResponded
 }
 
 // If-Match: * exists
 func (p *wmDecisionCore) doV3h7() WMDecision {
     if arr, ok := p.req.Header()["If-Match"]; ok && len(arr) > 0 && arr[0] == "*" {
-        p.resp.WriteHeader(412)
+        p.resp.WriteHeader(http.StatusPreconditionFailed)
         return wmResponded
     }
     return v3i7
@@ -697,7 +697,7 @@ func (p *wmDecisionCore) doV3h12() WMDecision {
         log.Print("[WMC]: comparing Last-Modified internal: ", t.Seconds(), " vs. received from client ", lastModified.Seconds())
     }
     if t != lastModified && t != nil && lastModified != nil && lastModified.Seconds() > t.Seconds() {
-        p.resp.WriteHeader(412)
+        p.resp.WriteHeader(http.StatusPreconditionFailed)
         return wmResponded
     }
     return v3i12
@@ -715,7 +715,7 @@ func (p *wmDecisionCore) doV3i4() WMDecision {
     }
     if len(uri) > 0 {
         p.resp.Header().Set("Location", uri)
-        p.resp.WriteHeader(301)
+        p.resp.WriteHeader(http.StatusMovedPermanently)
         return wmResponded
     }
     return v3p3
@@ -749,10 +749,10 @@ func (p *wmDecisionCore) doV3i13() WMDecision {
 func (p *wmDecisionCore) doV3j18() WMDecision {
     method := p.req.Method()
     if method == GET || method == HEAD {
-        p.resp.WriteHeader(304)
+        p.resp.WriteHeader(http.StatusNotModified)
         return wmResponded
     }
-    p.resp.WriteHeader(412)
+    p.resp.WriteHeader(http.StatusPreconditionFailed)
     return wmResponded
 }
 
@@ -764,7 +764,7 @@ func (p *wmDecisionCore) doV3k5() WMDecision {
     uri, p.req, p.cxt, httpCode, httpError = p.handler.MovedPermanently(p.req, p.cxt)
     if len(uri) > 0 {
         p.resp.Header().Set("Location", uri)
-        p.resp.WriteHeader(301)
+        p.resp.WriteHeader(http.StatusMovedPermanently)
         return wmResponded
     }
     if httpCode > 0 {
@@ -820,7 +820,7 @@ func (p *wmDecisionCore) doV3l5() WMDecision {
     uri, p.req, p.cxt, httpCode, httpError = p.handler.MovedTemporarily(p.req, p.cxt)
     if len(uri) > 0 {
         p.resp.Header().Set("Location", uri)
-        p.resp.WriteHeader(307)
+        p.resp.WriteHeader(http.StatusTemporaryRedirect)
         return wmResponded
     }
     if httpCode > 0 {
@@ -836,7 +836,7 @@ func (p *wmDecisionCore) doV3l7() WMDecision {
         return v3m7
     }
     log.Print("Writing Header 404\n")
-    p.resp.WriteHeader(404)
+    p.resp.WriteHeader(http.StatusNotFound)
     log.Print("Done Writing Header 404\n")
     return wmResponded
 }
@@ -885,7 +885,7 @@ func (p *wmDecisionCore) doV3l17() WMDecision {
     if lastModified == nil || t == nil || lastModified.Seconds() > t.Seconds() {
         return v3m16
     }
-    p.resp.WriteHeader(304)
+    p.resp.WriteHeader(http.StatusNotModified)
     return wmResponded
 }
 
@@ -894,7 +894,7 @@ func (p *wmDecisionCore) doV3m5() WMDecision {
     if p.req.Method() == POST {
         return v3n5
     }
-    p.resp.WriteHeader(410)
+    p.resp.WriteHeader(http.StatusGone)
     return wmResponded
 }
 
@@ -911,7 +911,7 @@ func (p *wmDecisionCore) doV3m7() WMDecision {
     if allowMissingPost {
         return v3n11
     }
-    p.resp.WriteHeader(404)
+    p.resp.WriteHeader(http.StatusNotFound)
     return wmResponded
 }
 
@@ -937,7 +937,7 @@ func (p *wmDecisionCore) doV3m20() WMDecision {
     if ok {
         return v3m20b
     }
-    p.resp.WriteHeader(500)
+    p.resp.WriteHeader(http.StatusInternalServerError)
     return wmResponded
 }
 
@@ -954,7 +954,7 @@ func (p *wmDecisionCore) doV3m20b() WMDecision {
     if completed {
         return v3o20
     }
-    p.resp.WriteHeader(202)
+    p.resp.WriteHeader(http.StatusAccepted)
     return wmResponded
 }
 
@@ -971,7 +971,7 @@ func (p *wmDecisionCore) doV3n5() WMDecision {
     if allowed {
         return v3n11
     }
-    p.resp.WriteHeader(410)
+    p.resp.WriteHeader(http.StatusGone)
     return wmResponded
 }
 
@@ -1024,9 +1024,9 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
     }
     if respIsRedirect {
         if len(p.resp.Header().Get("Location")) > 0 {
-            p.resp.WriteHeader(303)
+            p.resp.WriteHeader(http.StatusSeeOther)
         } else {
-            p.resp.WriteHeader(500)
+            p.resp.WriteHeader(http.StatusInternalServerError)
             io.WriteString(p.resp, "Response had do_redirect but no Location")
         }
         return wmResponded
@@ -1054,7 +1054,7 @@ func (p *wmDecisionCore) doV3o14() WMDecision {
         return wmResponded
     }
     if isConflict {
-        p.resp.WriteHeader(409)
+        p.resp.WriteHeader(http.StatusConflict)
         return wmResponded
     }
     if p.runAcceptHelper() {
@@ -1125,10 +1125,10 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
         return wmResponded
     }
     if multipleChoices {
-        p.resp.WriteHeader(300)
+        p.resp.WriteHeader(http.StatusMultipleChoices)
         return wmResponded
     }
-    p.resp.WriteHeader(200)
+    p.resp.WriteHeader(http.StatusOK)
     return wmResponded
 }
 
@@ -1137,7 +1137,7 @@ func (p *wmDecisionCore) doV3o20() WMDecision {
     if p.handler.HasRespBody(p.req, p.cxt) {
         return v3o18
     }
-    p.resp.WriteHeader(204)
+    p.resp.WriteHeader(http.StatusNoContent)
     return wmResponded
 }
 
@@ -1154,7 +1154,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
         return wmResponded
     }
     if isConflict {
-        p.resp.WriteHeader(409)
+        p.resp.WriteHeader(http.StatusConflict)
         return wmResponded
     }
     if p.runAcceptHelper() {
@@ -1166,7 +1166,7 @@ func (p *wmDecisionCore) doV3p3() WMDecision {
 // New resource?  (at this point boils down to "has location header")
 func (p *wmDecisionCore) doV3p11() WMDecision {
     if _, ok := p.resp.Header()["Location"]; ok {
-        p.resp.WriteHeader(201)
+        p.resp.WriteHeader(http.StatusCreated)
         return wmResponded
     }
     return v3o20
@@ -1229,7 +1229,7 @@ func (p *wmDecisionCore) acceptHelper() (int, http.Header, io.WriterTo) {
     mt := chooseMediaType(arr, ct)
     acceptArr := splitAcceptString(mt)
     if len(acceptArr) == 0 {
-        return 415, nil, nil
+        return http.StatusUnsupportedMediaType, nil, nil
     }
     for i := 0; i < arrLen; i++ {
         if arr[i] == mt {

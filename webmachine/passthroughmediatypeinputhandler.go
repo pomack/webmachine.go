@@ -81,7 +81,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            return 500, headers, newJSONWriter(m)
+            return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
         if file, err = os.OpenFile(p.filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
             log.Print("[PTMTIH]: Unable to create file named: \"", p.filename, "\" due to error: ", err)
@@ -90,7 +90,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            return 500, headers, newJSONWriter(m)
+            return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
     } else {
         if p.append {
@@ -105,7 +105,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             m["status"] = "error"
             m["message"] = err.String()
             m["result"] = p.urlPath
-            return 500, headers, newJSONWriter(m)
+            return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
     }
     var n int64
@@ -121,12 +121,12 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
         m["status"] = "error"
         m["message"] = err.String()
         m["result"] = p.urlPath
-        return 500, headers, newJSONWriter(m)
+        return http.StatusInternalServerError, headers, newJSONWriter(m)
     }
     headers := make(http.Header)
     //headers.Set("Content-Type", MIME_TYPE_JSON)
     m["status"] = "success"
     m["message"] = ""
     m["result"] = p.urlPath
-    return 200, headers, newJSONWriter(m)
+    return http.StatusOK, headers, newJSONWriter(m)
 }

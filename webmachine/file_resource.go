@@ -308,7 +308,7 @@ func (p *FileResource) DeleteResource(req Request, cxt Context) (bool, Request, 
     if err == nil {
         return true, req, cxt, 0, nil
     }
-    return false, req, cxt, 500, err
+    return false, req, cxt, http.StatusInternalServerError, err
 }
 
 /*

@@ -1006,7 +1006,10 @@ func (p *wmDecisionCore) doV3n11() WMDecision {
             if httpError != nil {
                 p.writeHaltOrError(httpCode, httpError)
             } else if writerTo != nil {
+                p.resp.WriteHeader(httpCode)
                 writerTo.WriteTo(p.resp)
+            } else {
+                p.resp.WriteHeader(httpCode)
             }
             return wmResponded
         }

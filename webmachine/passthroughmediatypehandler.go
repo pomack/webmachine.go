@@ -1,6 +1,7 @@
 package webmachine
 
 import (
+    "http"
     "io"
     //"log"
     "strconv"
@@ -13,6 +14,7 @@ type PassThroughMediaTypeHandler struct {
     reader              io.ReadCloser
     numberOfBytes       int64
     lastModified        *time.Time
+    statusCode          int
     writtenStatusHeader bool
 }
 
@@ -29,9 +31,16 @@ func (p *PassThroughMediaTypeHandler) MediaTypeOutput() string {
     return p.mediaType
 }
 
+func (p *PassThroughMediaTypeHandler) SetStatusCode(statusCode int) {
+    p.statusCode = statusCode
+}
+
 func (p *PassThroughMediaTypeHandler) MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
     if !p.writtenStatusHeader {
-        resp.WriteHeader(200)
+        if p.statusCode <= 0 {
+            p.statusCode = http.StatusOK
+        }
+        resp.WriteHeader(p.statusCode)
         p.writtenStatusHeader = true
     }
     if req.Header().Get("Accept-Ranges") == "bytes" {

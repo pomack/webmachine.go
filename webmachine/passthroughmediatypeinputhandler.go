@@ -1,10 +1,10 @@
 package webmachine
 
 import (
-    "http"
+    "encoding/json"
     "io"
-    "json"
     "log"
+    "net/http"
     "os"
     "path"
 )
@@ -17,7 +17,7 @@ func newJSONWriter(obj interface{}) *jsonWriter {
     return &jsonWriter{obj: obj}
 }
 
-func (p *jsonWriter) WriteTo(writer io.Writer) (n int64, err os.Error) {
+func (p *jsonWriter) WriteTo(writer io.Writer) (n int64, err error) {
     w := json.NewEncoder(writer)
     err = w.Encode(p.obj)
     return
@@ -26,7 +26,7 @@ func (p *jsonWriter) WriteTo(writer io.Writer) (n int64, err os.Error) {
 func (p *jsonWriter) String() string {
     b, err := json.Marshal(p.obj)
     if err != nil {
-        return err.String()
+        return err.Error()
     }
     return string(b)
 }
@@ -77,7 +77,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             headers := make(http.Header)
             //headers.Set("Content-Type", MIME_TYPE_JSON)
             m["status"] = "error"
-            m["message"] = err.String()
+            m["message"] = err.Error()
             m["result"] = p.urlPath
             return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
@@ -86,7 +86,7 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             headers := make(http.Header)
             //headers.Set("Content-Type", MIME_TYPE_JSON)
             m["status"] = "error"
-            m["message"] = err.String()
+            m["message"] = err.Error()
             m["result"] = p.urlPath
             return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
@@ -101,23 +101,23 @@ func (p *PassThroughMediaTypeInputHandler) MediaTypeHandleInputFrom(req Request,
             headers := make(http.Header)
             //headers.Set("Content-Type", MIME_TYPE_JSON)
             m["status"] = "error"
-            m["message"] = err.String()
+            m["message"] = err.Error()
             m["result"] = p.urlPath
             return http.StatusInternalServerError, headers, newJSONWriter(m)
         }
     }
     var n int64
     if p.numberOfBytes >= 0 {
-        n, err = io.Copyn(file, p.reader, p.numberOfBytes)
+        n, err = io.CopyN(file, p.reader, p.numberOfBytes)
     } else {
         n, err = io.Copy(file, p.reader)
     }
     log.Print("[PTMTIH]: Wrote ", n, " bytes to file with error: ", err)
-    if err != nil && err != os.EOF {
+    if err != nil && err != io.EOF {
         headers := make(http.Header)
         //headers.Set("Content-Type", MIME_TYPE_JSON)
         m["status"] = "error"
-        m["message"] = err.String()
+        m["message"] = err.Error()
         m["result"] = p.urlPath
         return http.StatusInternalServerError, headers, newJSONWriter(m)
     }

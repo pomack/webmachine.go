@@ -1,26 +1,27 @@
 package webmachine
 
 import (
+    "encoding/json"
     "io"
-    "json"
+    "log"
     "os"
     "path"
     "time"
 )
 
 type jsonDirectoryEntry struct {
-    Filename     string "filename"
-    Path         string "path"
-    Size         int64  "size"
-    IsDirectory  bool   "is_directory"
-    LastModified string "last_modified"
+    Filename     string `json:"filename"`
+    Path         string `json:"path"`
+    Size         int64  `json:"size"`
+    IsDirectory  bool   `json:"is_directory"`
+    LastModified string `json:"last_modified"`
 }
 
 type jsonDirectoryEntryResult struct {
-    Status  string               "status"
-    Message string               "message"
-    Path    string               "path"
-    Result  []jsonDirectoryEntry "result"
+    Status  string               `json:"status"`
+    Message string               `json:"message"`
+    Path    string               `json:"path"`
+    Result  []jsonDirectoryEntry `json:"result"`
 }
 
 type JsonDirectoryListing struct {
@@ -30,20 +31,20 @@ type JsonDirectoryListing struct {
 }
 
 type htmlDirectoryEntry struct {
-    Filename     string "filename"
-    Path         string "path"
-    Size         int64  "size"
-    IsDirectory  bool   "is_directory"
-    LastModified string "last_modified"
+    Filename     string `json:"filename"`
+    Path         string `json:"path"`
+    Size         int64  `json:"size"`
+    IsDirectory  bool   `json:"is_directory"`
+    LastModified string `json:"last_modified"`
 }
 
 type htmlDirectoryEntryResult struct {
-    Status       string               "status"
-    Tail         string               "tail"
-    Path         string               "path"
-    Message      string               "message"
-    LastModified string               "last_modified"
-    Result       []htmlDirectoryEntry "result"
+    Status       string               `json:"status"`
+    Tail         string               `json:"tail"`
+    Path         string               `json:"path"`
+    Message      string               `json:"message"`
+    LastModified string               `json:"last_modified"`
+    Result       []htmlDirectoryEntry `json:"result"`
 }
 
 type HtmlDirectoryListing struct {
@@ -63,7 +64,7 @@ func (p *JsonDirectoryListing) MediaTypeOutput() string {
 func (p *JsonDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context, writer io.Writer, resp ResponseWriter) {
     result := new(jsonDirectoryEntryResult)
     result.Path = p.urlPath
-    var err os.Error
+    var err error
     defer func() {
         if p.file != nil {
             p.file.Close()
@@ -74,7 +75,7 @@ func (p *JsonDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
         p.file, err = os.Open(p.fullPath)
         if err != nil {
             result.Status = "error"
-            result.Message = err.String()
+            result.Message = err.Error()
             result.Result = make([]jsonDirectoryEntry, 0)
             encoder := json.NewEncoder(writer)
             encoder.Encode(result)
@@ -84,7 +85,7 @@ func (p *JsonDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     fileInfos, err := p.file.Readdir(-1)
     if err != nil {
         result.Status = "error"
-        result.Message = err.String()
+        result.Message = err.Error()
         result.Result = make([]jsonDirectoryEntry, 0)
         encoder := json.NewEncoder(writer)
         encoder.Encode(result)
@@ -92,18 +93,18 @@ func (p *JsonDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     }
     entries := make([]jsonDirectoryEntry, len(fileInfos))
     for i, fileInfo := range fileInfos {
-        entries[i].Filename = fileInfo.Name
-        entries[i].Path = path.Join(p.urlPath, fileInfo.Name)
-        entries[i].Size = fileInfo.Size
-        entries[i].IsDirectory = fileInfo.IsDirectory()
-        if fileInfo.IsDirectory() {
+        entries[i].Filename = fileInfo.Name()
+        entries[i].Path = path.Join(p.urlPath, fileInfo.Name())
+        entries[i].Size = fileInfo.Size()
+        entries[i].IsDirectory = fileInfo.IsDir()
+        if fileInfo.IsDir() {
             entries[i].IsDirectory = true
             entries[i].Size = 0
         } else {
             entries[i].IsDirectory = false
-            entries[i].Size = fileInfo.Size
+            entries[i].Size = fileInfo.Size()
         }
-        entries[i].LastModified = time.SecondsToUTC(int64(fileInfo.Mtime_ns / 1e9)).Format(time.RFC3339)
+        entries[i].LastModified = fileInfo.ModTime().UTC().Format(time.RFC3339)
     }
     result.Status = "success"
     result.Message = ""
@@ -124,7 +125,7 @@ func (p *HtmlDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     result := new(htmlDirectoryEntryResult)
     result.Path = p.urlPath
     result.Tail = path.Base(p.urlPath)
-    var err os.Error
+    var err error
     defer func() {
         if p.file != nil {
             p.file.Close()
@@ -134,7 +135,7 @@ func (p *HtmlDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     if p.file == nil {
         p.file, err = os.Open(p.fullPath)
         if err != nil {
-            result.Message = err.String()
+            result.Message = err.Error()
             result.Result = make([]htmlDirectoryEntry, 0)
             HTML_DIRECTORY_LISTING_ERROR_TEMPLATE.Execute(writer, result)
             return
@@ -142,33 +143,34 @@ func (p *HtmlDirectoryListing) MediaTypeHandleOutputTo(req Request, cxt Context,
     }
     fileInfos, err := p.file.Readdir(-1)
     if err != nil {
-        result.Message = err.String()
+        result.Message = err.Error()
         result.Result = make([]htmlDirectoryEntry, 0)
         HTML_DIRECTORY_LISTING_ERROR_TEMPLATE.Execute(writer, result)
         return
     }
     entries := make([]htmlDirectoryEntry, len(fileInfos))
     for i, fileInfo := range fileInfos {
-        entries[i].Filename = fileInfo.Name
-        entries[i].Path = path.Join(p.urlPath, fileInfo.Name)
-        entries[i].Size = fileInfo.Size
-        entries[i].IsDirectory = fileInfo.IsDirectory()
-        if fileInfo.IsDirectory() {
+        entries[i].Filename = fileInfo.Name()
+        entries[i].Path = path.Join(p.urlPath, fileInfo.Name())
+        entries[i].Size = fileInfo.Size()
+        entries[i].IsDirectory = fileInfo.IsDir()
+        if fileInfo.IsDir() {
             entries[i].IsDirectory = true
             entries[i].Size = 0
         } else {
             entries[i].IsDirectory = false
-            entries[i].Size = fileInfo.Size
+            entries[i].Size = fileInfo.Size()
         }
-        entries[i].LastModified = time.SecondsToUTC(int64(fileInfo.Mtime_ns / 1e9)).Format(time.ANSIC)
+        entries[i].LastModified = fileInfo.ModTime().UTC().Format(time.ANSIC)
     }
     dirInfo, _ := p.file.Stat()
     if dirInfo != nil {
-        result.LastModified = time.SecondsToUTC(int64(dirInfo.Mtime_ns / 1e9)).Format(time.ANSIC)
+        result.LastModified = dirInfo.ModTime().UTC().Format(time.ANSIC)
     }
     result.Status = "success"
     result.Message = ""
     result.Result = entries
-    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE.Execute(writer, result)
+    log.Printf("Executing Success with result\n  %#v", result)
+    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE.ExecuteTemplate(writer, "directory_listing_success", result)
     return
 }

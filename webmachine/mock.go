@@ -2,10 +2,10 @@ package webmachine
 
 import (
     "bytes"
-    "http"
+    "encoding/json"
     "io/ioutil"
-    "json"
-    "os"
+    "net/http"
+    "net/http/httputil"
 )
 
 type MockResponseWriter struct {
@@ -28,7 +28,7 @@ func (p *MockResponseWriter) Header() http.Header {
     return p.Headers
 }
 
-func (p *MockResponseWriter) Write(data []byte) (int, os.Error) {
+func (p *MockResponseWriter) Write(data []byte) (int, error) {
     return p.Buffer.Write(data)
 }
 
@@ -36,7 +36,7 @@ func (p *MockResponseWriter) WriteHeader(statusCode int) {
     p.StatusCode = statusCode
 }
 
-func (p *MockResponseWriter) MarshalJSON() ([]byte, os.Error) {
+func (p *MockResponseWriter) MarshalJSON() ([]byte, error) {
     m := make(map[string]interface{})
     m["headers"] = p.Headers
     m["buffer"] = p.Buffer.String()
@@ -61,7 +61,7 @@ func (p *MockResponseWriter) String() string {
     resp.Close = p.Headers.Get("Connection") == "close"
     resp.Trailer = make(http.Header)
     resp.Request = p.Request
-    b, _ := http.DumpResponse(resp, true)
+    b, _ := httputil.DumpResponse(resp, true)
     return string(b)
 }
 

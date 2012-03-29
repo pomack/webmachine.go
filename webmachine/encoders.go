@@ -4,8 +4,8 @@ import (
     "compress/flate"
     "compress/gzip"
     "compress/lzw"
-    "http"
     "io"
+    "net/http/httputil"
 )
 
 type identityEncoding struct{}
@@ -67,7 +67,7 @@ func (p *gzipEncoding) Encoding() string {
 }
 
 func (p *gzipEncoding) Encoder(req Request, cxt Context, writer io.Writer) io.Writer {
-    w, _ := gzip.NewWriter(writer)
+    w := gzip.NewWriter(writer)
     return w
 }
 
@@ -89,7 +89,7 @@ func (p *deflateEncoding) Encoding() string {
 }
 
 func (p *deflateEncoding) Encoder(req Request, cxt Context, writer io.Writer) io.Writer {
-    w := flate.NewWriter(writer, flate.DefaultCompression)
+    w, _ := flate.NewWriter(writer, flate.DefaultCompression)
     return w
 }
 
@@ -110,7 +110,7 @@ func (p *chunkedEncoding) Encoding() string {
 }
 
 func (p *chunkedEncoding) Encoder(req Request, cxt Context, writer io.Writer) io.Writer {
-    return http.NewChunkedWriter(writer)
+    return httputil.NewChunkedWriter(writer)
 }
 
 func (p *chunkedEncoding) Decoder(req Request, cxt Context, reader io.Reader) io.Reader {

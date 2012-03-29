@@ -6,12 +6,10 @@ import (
     "compress/gzip"
     "compress/lzw"
     "compress/zlib"
-    "container/vector"
-    "http"
     "io"
     "log"
     "mime"
-    "os"
+    "net/http"
     "strconv"
     "strings"
     "time"
@@ -23,9 +21,9 @@ type wmDecisionCore struct {
     cxt                    Context
     handler                RequestHandler
     currentDecisionId      WMDecision
-    lastModified           *time.Time
-    unmodifiedSince        *time.Time
-    modifiedSince          *time.Time
+    lastModified           time.Time
+    unmodifiedSince        time.Time
+    modifiedSince          time.Time
     mediaTypeOutputHandler MediaTypeHandler
     encodingOutputHandler  EncodingHandler
     charsetOutputHandler   CharsetHandler
@@ -34,7 +32,7 @@ type wmDecisionCore struct {
     encoding               string
     charset                string
     language               string
-    decisions              vector.IntVector
+    decisions              []int
 }
 
 func handleRequest(handler RequestHandler, req Request, resp ResponseWriter) {
@@ -61,7 +59,7 @@ func handleRequest(handler RequestHandler, req Request, resp ResponseWriter) {
 func (p *wmDecisionCore) makeDecision(decisionId WMDecision) WMDecision {
     log.Print("[WM] Running decision: ", decisionId, " for ", p.req.Method(), " ", p.req.URL().Path, "\n")
     if decisionId != wmResponded {
-        p.decisions.Push(int(decisionId))
+        p.decisions = append(p.decisions, int(decisionId))
     }
     p.currentDecisionId = decisionId
     p.logDecision(decisionId)
@@ -76,10 +74,10 @@ func (p *wmDecisionCore) logDecision(decisionId WMDecision) {
     // TODO add logging
 }
 
-func (p *wmDecisionCore) writeHaltOrError(httpCode int, httpError os.Error) {
+func (p *wmDecisionCore) writeHaltOrError(httpCode int, httpError error) {
     p.resp.WriteHeader(httpCode)
     if httpError != nil {
-        io.WriteString(p.resp, httpError.String())
+        io.WriteString(p.resp, httpError.Error())
     }
 }
 
@@ -219,7 +217,7 @@ func (p *wmDecisionCore) doV3b13() WMDecision {
 func (p *wmDecisionCore) doV3b13b() WMDecision {
     var available bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if available, p.req, p.cxt, httpCode, httpError = p.handler.ServiceAvailable(p.req, p.cxt); available {
         return v3b12
     } else if httpCode > 0 {
@@ -246,7 +244,7 @@ func (p *wmDecisionCore) doV3b12() WMDecision {
 func (p *wmDecisionCore) doV3b11() WMDecision {
     var tooLong bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if tooLong, p.req, p.cxt, httpCode, httpError = p.handler.URITooLong(p.req, p.cxt); tooLong {
         p.resp.WriteHeader(http.StatusRequestURITooLong)
         return wmResponded
@@ -261,7 +259,7 @@ func (p *wmDecisionCore) doV3b11() WMDecision {
 func (p *wmDecisionCore) doV3b10() WMDecision {
     var allowedMethods []string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     method := p.req.Method()
     allowedMethods, p.req, p.cxt, httpCode, httpError = p.handler.AllowedMethods(p.req, p.cxt)
     if httpCode > 0 {
@@ -283,7 +281,7 @@ func (p *wmDecisionCore) doV3b10() WMDecision {
 func (p *wmDecisionCore) doV3b9() WMDecision {
     var isMalformed bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if isMalformed, p.req, p.cxt, httpCode, httpError = p.handler.MalformedRequest(p.req, p.cxt); isMalformed {
         p.resp.WriteHeader(http.StatusBadRequest)
         return wmResponded
@@ -299,7 +297,7 @@ func (p *wmDecisionCore) doV3b8() WMDecision {
     var isAuthorized bool
     var authHeaderString string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if isAuthorized, authHeaderString, p.req, p.cxt, httpCode, httpError = p.handler.IsAuthorized(p.req, p.cxt); isAuthorized {
         return v3b7
     } else if len(authHeaderString) > 0 {
@@ -316,7 +314,7 @@ func (p *wmDecisionCore) doV3b8() WMDecision {
 func (p *wmDecisionCore) doV3b7() WMDecision {
     var forbidden bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if forbidden, p.req, p.cxt, httpCode, httpError = p.handler.Forbidden(p.req, p.cxt); forbidden {
         p.resp.WriteHeader(http.StatusForbidden)
         return wmResponded
@@ -331,7 +329,7 @@ func (p *wmDecisionCore) doV3b7() WMDecision {
 func (p *wmDecisionCore) doV3b6() WMDecision {
     var isValid bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if isValid, p.req, p.cxt, httpCode, httpError = p.handler.ValidContentHeaders(p.req, p.cxt); isValid {
         return v3b5
     } else if httpCode > 0 {
@@ -346,7 +344,7 @@ func (p *wmDecisionCore) doV3b6() WMDecision {
 func (p *wmDecisionCore) doV3b5() WMDecision {
     var isKnown bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if isKnown, p.req, p.cxt, httpCode, httpError = p.handler.KnownContentType(p.req, p.cxt); isKnown {
         return v3b4
     } else if httpCode > 0 {
@@ -361,7 +359,7 @@ func (p *wmDecisionCore) doV3b5() WMDecision {
 func (p *wmDecisionCore) doV3b4() WMDecision {
     var isValid bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if isValid, p.req, p.cxt, httpCode, httpError = p.handler.ValidEntityLength(p.req, p.cxt); isValid {
         return v3b3
     } else if httpCode > 0 {
@@ -376,7 +374,7 @@ func (p *wmDecisionCore) doV3b4() WMDecision {
 func (p *wmDecisionCore) doV3b3() WMDecision {
     var arr []string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     if p.req.Method() == OPTIONS {
         arr, p.req, p.cxt, httpCode, httpError = p.handler.Options(p.req, p.cxt)
         if httpCode > 0 {
@@ -396,7 +394,7 @@ func (p *wmDecisionCore) doV3b3() WMDecision {
 func (p *wmDecisionCore) doV3c3() WMDecision {
     var provided []MediaTypeHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     arr, ok := p.req.Header()["Accept"]
     if !ok || len(arr) <= 0 {
         provided, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesProvided(p.req, p.cxt)
@@ -414,7 +412,7 @@ func (p *wmDecisionCore) doV3c3() WMDecision {
         }
         p.mediaType = p.mediaTypeOutputHandler.MediaTypeOutput()
         p.resp.Header().Set("Content-Type", p.mediaType)
-        _, params := mime.ParseMediaType(p.mediaType)
+        _, params, _ := mime.ParseMediaType(p.mediaType)
         if charset, ok := params["charset"]; ok {
             p.charset = charset
         }
@@ -427,7 +425,7 @@ func (p *wmDecisionCore) doV3c3() WMDecision {
 func (p *wmDecisionCore) doV3c4() WMDecision {
     var provided []MediaTypeHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     arr, _ := p.req.Header()["Accept"]
     provided, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesProvided(p.req, p.cxt)
     if httpCode > 0 {
@@ -444,7 +442,7 @@ func (p *wmDecisionCore) doV3c4() WMDecision {
         mediaType := bestMatch
         p.resp.Header().Set("Content-Type", mediaType)
         p.mediaType = mediaType
-        _, params := mime.ParseMediaType(mediaType)
+        _, params, _ := mime.ParseMediaType(mediaType)
         if charset, ok := params["charset"]; ok {
             p.charset = charset
         }
@@ -472,7 +470,7 @@ func (p *wmDecisionCore) doV3d4() WMDecision {
 func (p *wmDecisionCore) doV3d5() WMDecision {
     var hasLanguage bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     arr, _ := p.req.Header()["Accept-Language"]
     hasLanguage, p.req, p.cxt, httpCode, httpError = p.handler.IsLanguageAvailable(arr, p.req, p.cxt)
     if hasLanguage {
@@ -493,7 +491,7 @@ func (p *wmDecisionCore) doV3e5() WMDecision {
     }
     var handlers []CharsetHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     arr := make([]string, 1)
     arr[0] = "*"
     handlers, p.req, p.cxt, httpCode, httpError = p.handler.CharsetsProvided(arr, p.req, p.cxt)
@@ -516,7 +514,7 @@ func (p *wmDecisionCore) doV3e6() WMDecision {
     arr, _ := p.req.Header()["Accept-Charset"]
     var handlers []CharsetHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     handlers, p.req, p.cxt, httpCode, httpError = p.handler.CharsetsProvided(arr, p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -550,7 +548,7 @@ func (p *wmDecisionCore) doV3f6() WMDecision {
     arr := []string{"identity;q=1.0,*;q=0.5"}
     var handlers []EncodingHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     handlers, p.req, p.cxt, httpCode, httpError = p.handler.EncodingsProvided(arr, p.req, p.cxt)
     if len(handlers) > 0 {
         p.encodingOutputHandler = handlers[0]
@@ -602,7 +600,7 @@ func (p *wmDecisionCore) doV3g7() WMDecision {
     }
     var exists bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     exists, p.req, p.cxt, httpCode, httpError = p.handler.ResourceExists(p.req, p.cxt)
     if exists {
         return v3g8
@@ -639,7 +637,7 @@ func (p *wmDecisionCore) doV3g11() WMDecision {
         }
         var generatedEtag string
         var httpCode int
-        var httpError os.Error
+        var httpError error
         generatedEtag, p.req, p.cxt, httpCode, httpError = p.handler.GenerateETag(p.req, p.cxt)
         if generatedEtag == etag {
             return v3h10
@@ -684,19 +682,19 @@ func (p *wmDecisionCore) doV3h11() WMDecision {
 
 // Last-Modified > I-UM-S?
 func (p *wmDecisionCore) doV3h12() WMDecision {
-    var lastModified *time.Time
+    var lastModified time.Time
     var httpCode int
-    var httpError os.Error
+    var httpError error
     lastModified, p.req, p.cxt, httpCode, httpError = p.handler.LastModified(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
     t := p.unmodifiedSince
-    if t != nil && lastModified != nil {
-        log.Print("[WMC]: comparing Last-Modified internal: ", t.Seconds(), " vs. received from client ", lastModified.Seconds())
+    if !t.IsZero() && !lastModified.IsZero() {
+        log.Print("[WMC]: comparing Last-Modified internal: ", t.Unix(), " vs. received from client ", lastModified.Unix())
     }
-    if t != lastModified && t != nil && lastModified != nil && lastModified.Seconds() > t.Seconds() {
+    if t != lastModified && !t.IsZero() && !lastModified.IsZero() && lastModified.Unix() > t.Unix() {
         p.resp.WriteHeader(http.StatusPreconditionFailed)
         return wmResponded
     }
@@ -707,7 +705,7 @@ func (p *wmDecisionCore) doV3h12() WMDecision {
 func (p *wmDecisionCore) doV3i4() WMDecision {
     var uri string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     uri, p.req, p.cxt, httpCode, httpError = p.handler.MovedPermanently(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -760,7 +758,7 @@ func (p *wmDecisionCore) doV3j18() WMDecision {
 func (p *wmDecisionCore) doV3k5() WMDecision {
     var uri string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     uri, p.req, p.cxt, httpCode, httpError = p.handler.MovedPermanently(p.req, p.cxt)
     if len(uri) > 0 {
         p.resp.Header().Set("Location", uri)
@@ -778,7 +776,7 @@ func (p *wmDecisionCore) doV3k5() WMDecision {
 func (p *wmDecisionCore) doV3k7() WMDecision {
     var previouslyExisted bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     previouslyExisted, p.req, p.cxt, httpCode, httpError = p.handler.PreviouslyExisted(p.req, p.cxt)
     if previouslyExisted {
         return v3k5
@@ -799,7 +797,7 @@ func (p *wmDecisionCore) doV3k13() WMDecision {
         }
         var generatedEtag string
         var httpCode int
-        var httpError os.Error
+        var httpError error
         generatedEtag, p.req, p.cxt, httpCode, httpError = p.handler.GenerateETag(p.req, p.cxt)
         if generatedEtag == etag {
             return v3j18
@@ -816,7 +814,7 @@ func (p *wmDecisionCore) doV3k13() WMDecision {
 func (p *wmDecisionCore) doV3l5() WMDecision {
     var uri string
     var httpCode int
-    var httpError os.Error
+    var httpError error
     uri, p.req, p.cxt, httpCode, httpError = p.handler.MovedTemporarily(p.req, p.cxt)
     if len(uri) > 0 {
         p.resp.Header().Set("Location", uri)
@@ -855,7 +853,7 @@ func (p *wmDecisionCore) doV3l14() WMDecision {
     iumsDate := arr[0]
     t, err := time.Parse(http.TimeFormat, iumsDate)
     p.modifiedSince = t
-    if err == nil && t != nil {
+    if err == nil && !t.IsZero() {
         return v3l15
     }
     return v3m16
@@ -863,9 +861,9 @@ func (p *wmDecisionCore) doV3l14() WMDecision {
 
 // I-M-S > Now?
 func (p *wmDecisionCore) doV3l15() WMDecision {
-    now := time.UTC().Seconds()
+    now := time.Now().UTC().Unix()
     t := p.modifiedSince
-    if t != nil && t.Seconds() > now {
+    if !t.IsZero() && t.Unix() > now {
         return v3m16
     }
     return v3l17
@@ -874,15 +872,15 @@ func (p *wmDecisionCore) doV3l15() WMDecision {
 // Last-Modified > I-M-S?
 func (p *wmDecisionCore) doV3l17() WMDecision {
     t := p.modifiedSince
-    var lastModified *time.Time
+    var lastModified time.Time
     var httpCode int
-    var httpError os.Error
+    var httpError error
     lastModified, p.req, p.cxt, httpCode, httpError = p.handler.LastModified(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
         return wmResponded
     }
-    if lastModified == nil || t == nil || lastModified.Seconds() > t.Seconds() {
+    if lastModified.IsZero() || t.IsZero() || lastModified.Unix() > t.Unix() {
         return v3m16
     }
     p.resp.WriteHeader(http.StatusNotModified)
@@ -902,7 +900,7 @@ func (p *wmDecisionCore) doV3m5() WMDecision {
 func (p *wmDecisionCore) doV3m7() WMDecision {
     var allowMissingPost bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     allowMissingPost, p.req, p.cxt, httpCode, httpError = p.handler.AllowMissingPost(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -928,7 +926,7 @@ func (p *wmDecisionCore) doV3m16() WMDecision {
 func (p *wmDecisionCore) doV3m20() WMDecision {
     var ok bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     ok, p.req, p.cxt, httpCode, httpError = p.handler.DeleteResource(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -945,7 +943,7 @@ func (p *wmDecisionCore) doV3m20() WMDecision {
 func (p *wmDecisionCore) doV3m20b() WMDecision {
     var completed bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     completed, p.req, p.cxt, httpCode, httpError = p.handler.DeleteCompleted(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -962,7 +960,7 @@ func (p *wmDecisionCore) doV3m20b() WMDecision {
 func (p *wmDecisionCore) doV3n5() WMDecision {
     var allowed bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     allowed, p.req, p.cxt, httpCode, httpError = p.handler.AllowMissingPost(p.req, p.cxt)
     if httpCode > 0 {
         p.writeHaltOrError(httpCode, httpError)
@@ -979,7 +977,7 @@ func (p *wmDecisionCore) doV3n5() WMDecision {
 func (p *wmDecisionCore) doV3n11() WMDecision {
     var postIsCreate bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     var httpHeaders http.Header
     var writerTo io.WriterTo
     postIsCreate, p.req, p.cxt, httpCode, httpError = p.handler.PostIsCreate(p.req, p.cxt)
@@ -1049,7 +1047,7 @@ func (p *wmDecisionCore) doV3n16() WMDecision {
 func (p *wmDecisionCore) doV3o14() WMDecision {
     var isConflict bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     // TODO v3n11
     isConflict, p.req, p.cxt, httpCode, httpError = p.handler.IsConflict(p.req, p.cxt)
     if httpCode > 0 {
@@ -1081,13 +1079,13 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
     buildBody := method == GET || method == HEAD || p.handler.HasRespBody(p.req, p.cxt)
     var multipleChoices bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     var httpHeaders http.Header
     if buildBody {
         var etag string
         var httpCode int
-        var httpError os.Error
-        var lastModified, expires *time.Time
+        var httpError error
+        var lastModified, expires time.Time
         etag, p.req, p.cxt, httpCode, httpError = p.handler.GenerateETag(p.req, p.cxt)
         if httpCode > 0 {
             p.writeHaltOrError(httpCode, httpError)
@@ -1097,11 +1095,11 @@ func (p *wmDecisionCore) doV3o18() WMDecision {
             p.resp.Header().Set("ETag", strconv.Quote(etag))
         }
         lastModified, p.req, p.cxt, httpCode, httpError = p.handler.LastModified(p.req, p.cxt)
-        if lastModified != nil {
+        if !lastModified.IsZero() {
             p.resp.Header().Set("Last-Modified", lastModified.Format(http.TimeFormat))
         }
         expires, p.req, p.cxt, httpCode, httpError = p.handler.Expires(p.req, p.cxt)
-        if expires != nil {
+        if !expires.IsZero() {
             p.resp.Header().Set("Expires", expires.Format(http.TimeFormat))
         }
         if p.mediaTypeOutputHandler != nil {
@@ -1148,7 +1146,7 @@ func (p *wmDecisionCore) doV3o20() WMDecision {
 func (p *wmDecisionCore) doV3p3() WMDecision {
     var isConflict bool
     var httpCode int
-    var httpError os.Error
+    var httpError error
     // TOOD v3n11
     isConflict, p.req, p.cxt, httpCode, httpError = p.handler.IsConflict(p.req, p.cxt)
     log.Print("[WDC]: V3P3: isConflict", isConflict, ", code: ", httpCode, ", error: ", httpError)
@@ -1214,12 +1212,12 @@ func (p *wmDecisionCore) acceptHelper() (int, http.Header, io.WriterTo) {
     var ctAccepted []MediaTypeInputHandler
     var httpCode int
     var httpHeaders http.Header
-    var httpError os.Error
+    var httpError error
     var writerTo io.WriterTo
     ctAccepted, p.req, p.cxt, httpCode, httpError = p.handler.ContentTypesAccepted(p.req, p.cxt)
     if httpCode > 0 {
         if httpError != nil {
-            return httpCode, nil, bytes.NewBufferString(httpError.String())
+            return httpCode, nil, bytes.NewBufferString(httpError.Error())
         } else {
             return httpCode, nil, nil
         }
@@ -1254,22 +1252,22 @@ func (p *wmDecisionCore) encodeBodyIfSet() bool {
     return true
 }
 
-func (p *wmDecisionCore) bodyEncoder(w io.Writer) (io.Writer, os.Error) {
+func (p *wmDecisionCore) bodyEncoder(w io.Writer) (io.Writer, error) {
     var outW io.Writer
-    var err os.Error
+    var err error
     switch p.encoding {
     default:
         outW = w
     case "identity":
         outW = w
     case "deflate":
-        outW = flate.NewWriter(w, 6)
+        outW, err = flate.NewWriter(w, 6)
     case "gzip":
-        outW, err = gzip.NewWriter(w)
+        outW = gzip.NewWriter(w)
     case "lzw":
         outW = lzw.NewWriter(w, lzw.LSB, 8)
     case "zlib":
-        outW, err = zlib.NewWriter(w)
+        outW = zlib.NewWriter(w)
     }
     return outW, err
 }
@@ -1303,7 +1301,7 @@ func (p *wmDecisionCore) chooseEncoding() string {
 func (p *wmDecisionCore) chooseCharset() string {
     var charsetHandlers []CharsetHandler
     var httpCode int
-    var httpError os.Error
+    var httpError error
     arr := make([]string, 1)
     arr[0] = "*"
     charsetHandlers, p.req, p.cxt, httpCode, httpError = p.handler.CharsetsProvided(arr, p.req, p.cxt)
@@ -1331,7 +1329,7 @@ func (p *wmDecisionCore) chooseCharset() string {
 }
 
 func (p *wmDecisionCore) variances() []string {
-    var v vector.StringVector
+    v := make([]string, 0, 8)
     var ctp []MediaTypeHandler
     var ep []EncodingHandler
     var cp []CharsetHandler
@@ -1341,17 +1339,21 @@ func (p *wmDecisionCore) variances() []string {
     ep, p.req, p.cxt, _, _ = p.handler.EncodingsProvided(arr, p.req, p.cxt)
     cp, p.req, p.cxt, _, _ = p.handler.CharsetsProvided(arr, p.req, p.cxt)
     if len(ctp) > 1 {
-        v.Push("Accept")
+        v = append(v, "Accept")
     }
     if len(ep) > 1 {
-        v.Push("Accept-Encoding")
+        v = append(v, "Accept-Encoding")
     }
     if len(cp) > 1 {
-        v.Push("Accept-Charset")
+        v = append(v, "Accept-Charset")
     }
     var headers []string
     headers, p.req, p.cxt, _, _ = p.handler.Variances(p.req, p.cxt)
-    v2 := vector.StringVector(headers)
-    v.AppendVector(&v2)
+    if cap(v) < len(v)+len(headers) {
+        tmp := make([]string, 0, len(v)+len(headers))
+        copy(tmp, v)
+        v = tmp
+    }
+    copy(v[len(v):], headers)
     return v
 }

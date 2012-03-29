@@ -1,8 +1,8 @@
 package webmachine
 
 import (
-    "http"
     "log"
+    "net/http"
 )
 
 func NewWebMachine() WebMachine {
@@ -10,13 +10,16 @@ func NewWebMachine() WebMachine {
 }
 
 func (p *webMachine) AddRouteHandler(handler RouteHandler) {
-    p.routeHandlers.Push(handler)
+    p.routeHandlers = append(p.routeHandlers, handler)
 }
 
 func (p *webMachine) RemoveRouteHandler(handler RouteHandler) {
     for i, h := range p.routeHandlers {
         if h == handler {
-            p.routeHandlers.Delete(i)
+            handlers := make([]RouteHandler, 0, cap(p.routeHandlers))
+            copy(handlers, p.routeHandlers[0:i])
+            copy(handlers, p.routeHandlers[i+1:])
+            p.routeHandlers = handlers
             break
         }
     }

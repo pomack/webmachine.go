@@ -73,7 +73,7 @@ func chooseMediaType(providedStrings []string, accept string) string {
                     }
                 }
                 if q, ok := acceptMatch.parameters["q"]; ok {
-                    if qf, err := strconv.Atof64(q); err != nil {
+                    if qf, err := strconv.ParseFloat(q, 64); err != nil {
                         score *= qf
                     }
                 }
@@ -139,7 +139,7 @@ func chooseStandardMatch(providedStrings []string, matchStrings []standardMatch)
                     }
                 }
                 if q, ok := match.parameters["q"]; ok {
-                    if qf, err := strconv.Atof64(q); err != nil {
+                    if qf, err := strconv.ParseFloat(q, 64); err != nil {
                         score *= qf
                     }
                 }
@@ -192,21 +192,21 @@ func (p *PassThroughMediaTypeHandler) splitRangeHeaderString(rangeHeader string)
             switch {
             case dashIndex < 0:
                 // single byte, e.g. 507
-                ranges[i][0], _ = strconv.Atoi64(trimmedRangeString)
+                ranges[i][0], _ = strconv.ParseInt(trimmedRangeString, 10, 64)
                 ranges[i][1] = ranges[i][0] + 1
             case dashIndex == 0:
                 // start from end, e.g -51
-                ranges[i][0], _ = strconv.Atoi64(trimmedRangeString)
+                ranges[i][0], _ = strconv.ParseInt(trimmedRangeString, 10, 64)
                 ranges[i][0] += p.numberOfBytes
                 ranges[i][1] = p.numberOfBytes
             case dashIndex == len(trimmedRangeString):
                 // byte to end, e.g. 9500-
-                ranges[i][0], _ = strconv.Atoi64(trimmedRangeString)
+                ranges[i][0], _ = strconv.ParseInt(trimmedRangeString, 10, 64)
                 ranges[i][1] = p.numberOfBytes
             default:
                 // range, e.g. 400-500
-                ranges[i][0], _ = strconv.Atoi64(trimmedRangeString[0:dashIndex])
-                ranges[i][1], _ = strconv.Atoi64(trimmedRangeString[dashIndex:])
+                ranges[i][0], _ = strconv.ParseInt(trimmedRangeString[0:dashIndex], 10, 64)
+                ranges[i][1], _ = strconv.ParseInt(trimmedRangeString[dashIndex:], 10, 64)
                 ranges[i][1] += 1
             }
             if ranges[i][0] >= p.numberOfBytes {

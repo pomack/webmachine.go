@@ -6,7 +6,6 @@ package webmachine
 
 import (
     "io"
-    "os"
     "strconv"
 )
 
@@ -26,14 +25,14 @@ type chunkedWriter struct {
 // Write the contents of data as one chunk to writer.
 // NOTE: Note that the corresponding chunk-writing procedure in Conn.Write has
 // a bug since it does not check for success of io.WriteString
-func (p *chunkedWriter) Write(data []byte) (n int, err os.Error) {
+func (p *chunkedWriter) Write(data []byte) (n int, err error) {
 
     // Don't send 0-length data. It looks like EOF for chunked encoding.
     if len(data) == 0 {
         return 0, nil
     }
 
-    head := strconv.Itob(len(data), 16) + "\r\n"
+    head := strconv.FormatInt(int64(len(data)), 16) + "\r\n"
 
     if _, err = io.WriteString(p.writer, head); err != nil {
         return 0, err
@@ -50,9 +49,9 @@ func (p *chunkedWriter) Write(data []byte) (n int, err os.Error) {
     return
 }
 
-func (p *chunkedWriter) Close() os.Error {
+func (p *chunkedWriter) Close() error {
     if p.writer != nil {
-        var err2 os.Error
+        var err2 error
         _, err := io.WriteString(p.writer, "0\r\n")
         if closer, ok := p.writer.(io.Closer); ok {
             err2 = closer.Close()
@@ -84,7 +83,7 @@ type chunkedReader struct {
 // Read the contents of data as one chunk from reader.
 // NOTE: Note that the corresponding chunk-writing procedure in Conn.Write has
 // a bug since it does not check for success of io.WriteString
-func (p *chunkedReader) Read(data []byte) (n int, err os.Error) {
+func (p *chunkedReader) Read(data []byte) (n int, err error) {
 
     // Don't send 0-length data. It looks like EOF for chunked encoding.
     if len(data) == 0 {
@@ -131,14 +130,14 @@ func (p *chunkedReader) Read(data []byte) (n int, err os.Error) {
         line[offset] = oneByte[0]
         offset++
     }
-    p.bytesLeftInChunk, err = strconv.Atoi64(string(line[0 : offset+1]))
+    p.bytesLeftInChunk, err = strconv.ParseInt(string(line[0:offset+1]), 10, 64)
     if err != nil {
         return 0, err
     }
     return p.Read(data)
 }
 
-func (p *chunkedReader) Close() os.Error {
+func (p *chunkedReader) Close() error {
     if p.reader != nil {
         if closer, ok := p.reader.(io.Closer); ok {
             err := closer.Close()

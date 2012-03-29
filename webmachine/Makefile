@@ -1,32 +1,24 @@
+# Copyright 2012 Aalok Shah. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
 
-include $(GOROOT)/src/Make.inc
+all: install
 
-TARG=github.com/pomack/webmachine.go/webmachine
-GOFILES=\
-	charset.go\
-	chunked.go\
-	const.go\
-	decision.go\
-	directorylisting.go\
-	encoders.go\
-	file_resource.go\
-	mock.go\
-	passthroughmediatypehandler.go\
-	passthroughmediatypeinputhandler.go\
-	request.go\
-	resource.go\
-	responsewriter.go\
-	types.go\
-	util.go\
-	webmachine.go\
-	writethrough.go
+GOPATH:=$(GOPATH):`pwd`
+PACKAGE_NAME=github.com/pomack/webmachine.go/webmachine
 
-DIRS=\
+clean:
+	GOPATH=$(GOPATH) go clean $(PACKAGE_NAME)
 
-include $(GOROOT)/src/Make.pkg
+install:
+	GOPATH=$(GOPATH) go install $(PACKAGE_NAME)
+
+nuke:
+	GOPATH=$(GOPATH) go clean -i $(PACKAGE_NAME)
+
+test:
+	GOPATH=$(GOPATH) go test $(PACKAGE_NAME)
 
 check:
-	gomake test
-
--include ../Make.deps
+	GOPATH=$(GOPATH) go build $(PACKAGE_NAME)
 

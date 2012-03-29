@@ -1,12 +1,11 @@
 package webmachine
 
 import (
-    "http"
     "io"
     "mime/multipart"
-    "os"
+    "net/http"
+    "net/url"
     "strings"
-    "url"
 )
 
 func NewRequestFromHttpRequest(req *http.Request) Request {
@@ -26,7 +25,7 @@ func (p *request) Method() string {
 }
 
 func (p *request) RawURL() string {
-    return p.req.RawURL
+    return p.req.URL.String()
 }
 
 func (p *request) URL() *url.URL {
@@ -53,7 +52,7 @@ func (p *request) AddCookie(c *http.Cookie) {
     p.req.AddCookie(c)
 }
 
-func (p *request) Cookie(name string) (*http.Cookie, os.Error) {
+func (p *request) Cookie(name string) (*http.Cookie, error) {
     return p.req.Cookie(name)
 }
 
@@ -93,7 +92,7 @@ func (p *request) Form() map[string][]string {
     return p.req.Form
 }
 
-func (p *request) FormFile(key string) (multipart.File, *multipart.FileHeader, os.Error) {
+func (p *request) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
     return p.req.FormFile(key)
 }
 
@@ -101,15 +100,15 @@ func (p *request) FormValue(key string) string {
     return p.req.FormValue(key)
 }
 
-func (p *request) MultipartReader() (*multipart.Reader, os.Error) {
+func (p *request) MultipartReader() (*multipart.Reader, error) {
     return p.req.MultipartReader()
 }
 
-func (p *request) ParseForm() os.Error {
+func (p *request) ParseForm() error {
     return p.req.ParseForm()
 }
 
-func (p *request) ParseMultipartForm(maxMemory int64) os.Error {
+func (p *request) ParseMultipartForm(maxMemory int64) error {
     return p.req.ParseMultipartForm(maxMemory)
 }
 

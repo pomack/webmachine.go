@@ -1,10 +1,9 @@
 package webmachine
 
 import (
-    "http"
     "io"
     "log"
-    "os"
+    "net/http"
 )
 
 type ResponseWriter interface {
@@ -32,8 +31,11 @@ func (p *responseWriter) Header() http.Header {
     return p.rw.Header()
 }
 
-func (p *responseWriter) Write(data []byte) (int, os.Error) {
+func (p *responseWriter) Write(data []byte) (int, error) {
     log.Print("[RW]: Writing data ", len(data), " bytes")
+    if len(data) < 5000 {
+        log.Print("[RW]: Wrote:\n", string(data))
+    }
     return p.w.Write(data)
 }
 
@@ -45,7 +47,7 @@ func (p *responseWriter) AddEncoding(h EncodingHandler, req Request, cxt Context
     return p.w
 }
 
-func (p *responseWriter) Flush() os.Error {
+func (p *responseWriter) Flush() error {
     if p.rw != p.w {
         if f, ok := p.w.(Flusher); ok {
             log.Print("[RW]: Flushing Writer")
@@ -60,7 +62,7 @@ func (p *responseWriter) Flush() os.Error {
     return nil
 }
 
-func (p *responseWriter) Close() os.Error {
+func (p *responseWriter) Close() error {
     if p.rw != p.w {
         if closer, ok := p.w.(io.Closer); ok {
             closer.Close()

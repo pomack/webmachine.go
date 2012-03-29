@@ -1,10 +1,10 @@
 package webmachine
 
 import (
-    "http"
     "io"
+    "net/http"
     //"log"
-    "os"
+
     "strconv"
     "time"
 )
@@ -13,12 +13,12 @@ type PassThroughMediaTypeHandler struct {
     mediaType           string
     reader              io.ReadCloser
     numberOfBytes       int64
-    lastModified        *time.Time
+    lastModified        time.Time
     statusCode          int
     writtenStatusHeader bool
 }
 
-func NewPassThroughMediaTypeHandler(mediaType string, reader io.ReadCloser, numberOfBytes int64, lastModified *time.Time) *PassThroughMediaTypeHandler {
+func NewPassThroughMediaTypeHandler(mediaType string, reader io.ReadCloser, numberOfBytes int64, lastModified time.Time) *PassThroughMediaTypeHandler {
     return &PassThroughMediaTypeHandler{
         mediaType:     mediaType,
         reader:        reader,
@@ -52,15 +52,15 @@ func (p *PassThroughMediaTypeHandler) MediaTypeHandleOutputTo(req Request, cxt C
                 if i > 0 {
                     outRangeString += ","
                 }
-                outRangeString += strconv.Itoa64(arange[0]) + "-" + strconv.Itoa64(arange[1]-1)
+                outRangeString += strconv.FormatInt(arange[0], 10) + "-" + strconv.FormatInt(arange[1]-1, 10)
             }
-            outRangeString += "/" + strconv.Itoa64(p.numberOfBytes)
+            outRangeString += "/" + strconv.FormatInt(p.numberOfBytes, 10)
             resp.Header().Set("Content-Range", "bytes="+outRangeString)
             currentOffset := int64(0)
             for _, arange := range ranges {
                 start := arange[0]
                 end := arange[1]
-                var err os.Error
+                var err error
                 if currentOffset < start {
                     if seeker, ok := p.reader.(io.Seeker); ok {
                         currentOffset, err = seeker.Seek(start-currentOffset, 1)
@@ -88,7 +88,7 @@ func (p *PassThroughMediaTypeHandler) MediaTypeHandleOutputTo(req Request, cxt C
                     return
                 }
                 for currentOffset < end {
-                    written, err := io.Copyn(writer, p.reader, end-currentOffset)
+                    written, err := io.CopyN(writer, p.reader, end-currentOffset)
                     currentOffset += written
                     if err != nil {
                         return

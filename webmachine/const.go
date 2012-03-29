@@ -1,7 +1,7 @@
 package webmachine
 
 import (
-    "template"
+    "html/template"
 )
 
 const (
@@ -86,8 +86,8 @@ const (
 )
 
 const (
-    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>{Tail} - Directory Listing</title>\n  </head>\n  <body>\n    <h1>{Tail}</h1>\n    <h4>{Path}</h4>\n    <p>{Message}</p>\n    <table>\n      <thead>\n        <tr>\n          <th>Filename</th>\n          <th>Size</th>\n          <th>Last Modified</th>\n        </tr>\n      </thead>\n      <tbody>\n        {.repeated section Result}\n        <tr class=\"entry\">\n          <td class=\"name\"><a href=\"{Path}\">{Filename}</a></td>\n          <td class=\"size\">{Size}</td>\n          <td class=\"last_modified\">{LastModified}</td>\n        </tr>\n        {.end}\n      </tbody>\n    </table>\n    <p>Last Modified: {LastModified}</p>\n  </body>\n</html>"
-    HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING   = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>Error in Directory Listing</title>\n  </head>\n  <body>\n    <h1>Error in Directory Listing</h1>\n    <p>While accessing <code>{Path}</code></p>\n    <h4>Error</h4>\n    <p>{Message}</p>\n  </body>\n</html>"
+    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING = "<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>{{.Tail}} - Directory Listing</title>\n  </head>\n  <body>\n    <h1>{{.Tail}}</h1>\n    <h4>{{.Path}}</h4>\n    <p>{{.Message}}</p>\n    <table>\n      <thead>\n        <tr>\n          <th>Filename</th>\n          <th>Size</th>\n          <th>Last Modified</th>\n        </tr>\n      </thead>\n      <tbody>\n        {{range .Result}}\n        <tr class=\"entry\">\n          <td class=\"name\"><a href=\"{{.Path}}\">{{.Filename}}</a></td>\n          <td class=\"size\">{{.Size}}</td>\n          <td class=\"last_modified\">{{.LastModified}}</td>\n        </tr>\n        {{end}}\n      </tbody>\n    </table>\n    <p>Last Modified: {{.LastModified}}</p>\n  </body>\n</html>"
+    HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING   = "<!DOCTYPE html>\n<html lang=\"en_US\">\n  <head>\n    <title>Error in Directory Listing</title>\n  </head>\n  <body>\n    <h1>Error in Directory Listing</h1>\n    <p>While accessing <code>{{.Path}}</code></p>\n    <h4>Error</h4>\n    <p>{{.Message}}</p>\n  </body>\n</html>"
 )
 
 const (
@@ -155,8 +155,11 @@ func init() {
     defaultMimeTypes[".text"] = MIME_TYPE_TEXT_PLAIN
     defaultMimeTypes[".csv"] = MIME_TYPE_CSV
 
-    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE, _ = template.New("directory_listing_success").Parse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING)
-    HTML_DIRECTORY_LISTING_ERROR_TEMPLATE, _ = template.New("directory_listing_error").Parse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING)
+    var err error
+    HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE, err = template.New("directory_listing_success").Parse(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE_STRING)
+    template.Must(HTML_DIRECTORY_LISTING_SUCCESS_TEMPLATE, err)
+    HTML_DIRECTORY_LISTING_ERROR_TEMPLATE, err = template.New("directory_listing_error").Parse(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE_STRING)
+    template.Must(HTML_DIRECTORY_LISTING_ERROR_TEMPLATE, err)
 }
 
 func (p WMDecision) String() string {

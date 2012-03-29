@@ -1,17 +1,15 @@
 package webmachine
 
 import (
-    "container/vector"
-    "http"
     "io"
     "mime/multipart"
-    "os"
+    "net/http"
+    "net/url"
     "time"
-    "url"
 )
 
 type Flusher interface {
-    Flush() os.Error
+    Flush() error
 }
 
 type Request interface {
@@ -25,7 +23,7 @@ type Request interface {
 
     Header() http.Header
     AddCookie(c *http.Cookie)
-    Cookie(name string) (*http.Cookie, os.Error)
+    Cookie(name string) (*http.Cookie, error)
     Cookies() []*http.Cookie
     Body() io.ReadCloser
     ContentLength() int64
@@ -35,11 +33,11 @@ type Request interface {
     Referer() string
     UserAgent() string
     Form() map[string][]string
-    FormFile(key string) (multipart.File, *multipart.FileHeader, os.Error)
+    FormFile(key string) (multipart.File, *multipart.FileHeader, error)
     FormValue(key string) string
-    MultipartReader() (*multipart.Reader, os.Error)
-    ParseForm() (err os.Error)
-    ParseMultipartForm(maxMemory int64) os.Error
+    MultipartReader() (*multipart.Reader, error)
+    ParseForm() (err error)
+    ParseMultipartForm(maxMemory int64) error
     Trailer() http.Header
     HostParts() []string
     URLParts() []string
@@ -80,39 +78,39 @@ type EncodingHandler interface {
 
 type RequestHandler interface {
     StartRequest(req Request, cxt Context) (Request, Context)
-    ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, os.Error)
-    Forbidden(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    AllowMissingPost(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    MalformedRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    URITooLong(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    KnownContentType(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    ValidContentHeaders(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    ValidEntityLength(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    Options(req Request, cxt Context) ([]string, Request, Context, int, os.Error)
-    AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, os.Error)
-    DeleteResource(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    DeleteCompleted(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    CreatePath(req Request, cxt Context) (string, Request, Context, int, os.Error)
-    ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, os.Error)
-    ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error)
-    ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error)
-    IsLanguageAvailable(languages []string, req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    CharsetsProvided(charsets []string, req Request, cxt Context) ([]CharsetHandler, Request, Context, int, os.Error)
-    EncodingsProvided(encodings []string, req Request, cxt Context) ([]EncodingHandler, Request, Context, int, os.Error)
-    Variances(req Request, cxt Context) ([]string, Request, Context, int, os.Error)
-    IsConflict(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, os.Error)
-    PreviouslyExisted(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    MovedPermanently(req Request, cxt Context) (string, Request, Context, int, os.Error)
-    MovedTemporarily(req Request, cxt Context) (string, Request, Context, int, os.Error)
-    LastModified(req Request, cxt Context) (*time.Time, Request, Context, int, os.Error)
-    Expires(req Request, cxt Context) (*time.Time, Request, Context, int, os.Error)
-    GenerateETag(req Request, cxt Context) (string, Request, Context, int, os.Error)
-    FinishRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error)
-    ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, os.Error)
+    ResourceExists(req Request, cxt Context) (bool, Request, Context, int, error)
+    ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, error)
+    IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, error)
+    Forbidden(req Request, cxt Context) (bool, Request, Context, int, error)
+    AllowMissingPost(req Request, cxt Context) (bool, Request, Context, int, error)
+    MalformedRequest(req Request, cxt Context) (bool, Request, Context, int, error)
+    URITooLong(req Request, cxt Context) (bool, Request, Context, int, error)
+    KnownContentType(req Request, cxt Context) (bool, Request, Context, int, error)
+    ValidContentHeaders(req Request, cxt Context) (bool, Request, Context, int, error)
+    ValidEntityLength(req Request, cxt Context) (bool, Request, Context, int, error)
+    Options(req Request, cxt Context) ([]string, Request, Context, int, error)
+    AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, error)
+    DeleteResource(req Request, cxt Context) (bool, Request, Context, int, error)
+    DeleteCompleted(req Request, cxt Context) (bool, Request, Context, int, error)
+    PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, error)
+    CreatePath(req Request, cxt Context) (string, Request, Context, int, error)
+    ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, error)
+    ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, error)
+    ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, error)
+    IsLanguageAvailable(languages []string, req Request, cxt Context) (bool, Request, Context, int, error)
+    CharsetsProvided(charsets []string, req Request, cxt Context) ([]CharsetHandler, Request, Context, int, error)
+    EncodingsProvided(encodings []string, req Request, cxt Context) ([]EncodingHandler, Request, Context, int, error)
+    Variances(req Request, cxt Context) ([]string, Request, Context, int, error)
+    IsConflict(req Request, cxt Context) (bool, Request, Context, int, error)
+    MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, error)
+    PreviouslyExisted(req Request, cxt Context) (bool, Request, Context, int, error)
+    MovedPermanently(req Request, cxt Context) (string, Request, Context, int, error)
+    MovedTemporarily(req Request, cxt Context) (string, Request, Context, int, error)
+    LastModified(req Request, cxt Context) (time.Time, Request, Context, int, error)
+    Expires(req Request, cxt Context) (time.Time, Request, Context, int, error)
+    GenerateETag(req Request, cxt Context) (string, Request, Context, int, error)
+    FinishRequest(req Request, cxt Context) (bool, Request, Context, int, error)
+    ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, error)
 
     HasRespBody(req Request, cxt Context) bool
 }
@@ -124,7 +122,7 @@ type WebMachine interface {
 }
 
 type webMachine struct {
-    routeHandlers vector.Vector
+    routeHandlers []RouteHandler
 }
 
 type WriteThrough struct {

@@ -1,19 +1,24 @@
-
-include $(GOROOT)/src/Make.inc
+# Copyright 2012 Aalok Shah. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
 
 all: install
 
-TARG=fileserver
-GOFILES=\
-	server.go
+GOPATH:=$(GOPATH):`pwd`
+BIN_NAME=fileserver
 
-DIRS=\
+clean:
+	GOPATH=$(GOPATH) go clean -x
 
+install:
+	GOPATH=$(GOPATH) go build -v -o $(BIN_NAME)
 
--include ../Make.deps
+nuke:
+	GOPATH=$(GOPATH) go clean -i -x
 
-include $(GOROOT)/src/Make.cmd
+test:
 
 check:
-	gomake test
+	GOPATH=$(GOPATH) go build -v -o $(BIN_NAME)
+	-/bin/rm -f $(BIN_NAME)
 

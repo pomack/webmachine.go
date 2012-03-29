@@ -3,9 +3,9 @@ package main
 import (
     "flag"
     "github.com/pomack/webmachine.go/webmachine"
-    "http"
     "io"
     "log"
+    "net/http"
     "strconv"
 )
 
@@ -30,6 +30,6 @@ func main() {
     wm.AddRouteHandler(webmachine.NewFileResource(directory, urlPathPrefix, allowWrite, allowDirectoryListing))
     err := http.ListenAndServe(":"+strconv.Itoa(port), wm)
     if err != nil {
-        log.Fatal("ListenAndServe: ", err.String())
+        log.Fatal("ListenAndServe: ", err.Error())
     }
 }

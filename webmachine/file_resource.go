@@ -2,14 +2,14 @@ package webmachine
 
 import (
     "container/list"
-    "http"
     "io"
     "log"
+    "math/rand"
     "mime"
+    "net/http"
     "os"
     "path"
     "path/filepath"
-    "rand"
     "strconv"
     "time"
 )
@@ -25,17 +25,17 @@ type FileResource struct {
 type FileResourceContext interface {
     FullPath() string
     SetFullPath(fullPath string)
-    ReaderOpen() (io.ReadCloser, os.Error)
-    WriterOpen(append bool) (io.WriteCloser, os.Error)
-    Close() os.Error
-    Read(data []byte) (int, os.Error)
-    Write(data []byte) (int, os.Error)
+    ReaderOpen() (io.ReadCloser, error)
+    WriterOpen(append bool) (io.WriteCloser, error)
+    Close() error
+    Read(data []byte) (int, error)
+    Write(data []byte) (int, error)
     Exists() bool
     CanRead() bool
     CanWrite(append bool) bool
     IsDir() bool
     IsFile() bool
-    LastModified() *time.Time
+    LastModified() time.Time
     Len() int64
     HasMultipleResources() bool
     MultipleResourceNames() []string
@@ -43,7 +43,7 @@ type FileResourceContext interface {
 
 type fileResourceContext struct {
     fullPath       string
-    fileInfo       *os.FileInfo
+    fileInfo       os.FileInfo
     namedResources []string
     reader         io.ReadCloser
     writer         io.WriteCloser
@@ -72,7 +72,7 @@ func (p *fileResourceContext) SetFullPath(fullPath string) {
     if p.fileInfo == nil {
         dir, tail := path.Split(fullPath)
         dirInfo, _ := os.Stat(dir)
-        if dirInfo != nil && dirInfo.IsDirectory() {
+        if dirInfo != nil && dirInfo.IsDir() {
             dirFile, _ := os.Open(dir)
             if dirFile != nil {
                 names, _ := dirFile.Readdirnames(-1)
@@ -104,20 +104,20 @@ func (p *fileResourceContext) MultipleResourceNames() []string {
     return p.namedResources
 }
 
-func (p *fileResourceContext) ReaderOpen() (io.ReadCloser, os.Error) {
+func (p *fileResourceContext) ReaderOpen() (io.ReadCloser, error) {
     if p.reader != nil {
         p.reader.Close()
     }
-    var err os.Error
+    var err error
     p.reader, err = os.Open(p.fullPath)
     return p, err
 }
 
-func (p *fileResourceContext) WriterOpen(append bool) (io.WriteCloser, os.Error) {
+func (p *fileResourceContext) WriterOpen(append bool) (io.WriteCloser, error) {
     if p.writer != nil {
         p.writer.Close()
     }
-    var err os.Error
+    var err error
     if append {
         p.writer, err = os.OpenFile(p.fullPath, os.O_APPEND, 0644)
     } else {
@@ -126,8 +126,8 @@ func (p *fileResourceContext) WriterOpen(append bool) (io.WriteCloser, os.Error)
     return p, err
 }
 
-func (p *fileResourceContext) Close() os.Error {
-    var e1, e2 os.Error
+func (p *fileResourceContext) Close() error {
+    var e1, e2 error
     p.fileInfo = nil
     if p.reader != nil {
         e1 = p.reader.Close()
@@ -141,26 +141,26 @@ func (p *fileResourceContext) Close() os.Error {
     return e2
 }
 
-func (p *fileResourceContext) Read(data []byte) (int, os.Error) {
+func (p *fileResourceContext) Read(data []byte) (int, error) {
     if p.reader == nil {
         log.Print("[FRC]: Trying to open file ", p.FullPath(), " for reading\n")
-        var err os.Error
+        var err error
         p.reader, err = os.Open(p.FullPath())
         if err != nil {
             return 0, err
         }
         if p.reader == nil {
-            return 0, os.EOF
+            return 0, io.EOF
         }
     }
     log.Print("[FRC]: Going to read ", len(data), " bytes\n")
     return p.reader.Read(data)
 }
 
-func (p *fileResourceContext) Write(data []byte) (int, os.Error) {
+func (p *fileResourceContext) Write(data []byte) (int, error) {
     if p.writer == nil {
         log.Print("[FRC]: Trying to open file ", p.FullPath(), " for appending\n")
-        var err os.Error
+        var err error
         p.writer, err = os.OpenFile(p.FullPath(), os.O_APPEND, 0644)
         if err != nil {
             return 0, err
@@ -194,23 +194,23 @@ func (p *fileResourceContext) CanWrite(append bool) bool {
 }
 
 func (p *fileResourceContext) IsDir() bool {
-    return p.fileInfo != nil && p.fileInfo.IsDirectory()
+    return p.fileInfo != nil && p.fileInfo.IsDir()
 }
 
 func (p *fileResourceContext) IsFile() bool {
-    return p.fileInfo != nil && p.fileInfo.IsRegular()
+    return p.fileInfo != nil && !p.fileInfo.IsDir()
 }
 
-func (p *fileResourceContext) LastModified() *time.Time {
+func (p *fileResourceContext) LastModified() time.Time {
     if p.fileInfo != nil {
-        return time.SecondsToUTC(int64(p.fileInfo.Mtime_ns / 1e9))
+        return p.fileInfo.ModTime().UTC()
     }
-    return nil
+    return time.Time{}
 }
 
 func (p *fileResourceContext) Len() int64 {
     if p.fileInfo != nil {
-        return p.fileInfo.Size
+        return p.fileInfo.Size()
     }
     return 0
 }
@@ -246,7 +246,7 @@ func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request
   return true, req, cxt, 0, nil
 }
 */
-func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     if !frc.Exists() && !frc.HasMultipleResources() {
         return false, req, frc, 0, nil
@@ -259,7 +259,7 @@ func (p *FileResource) ResourceExists(req Request, cxt Context) (bool, Request, 
     return frc.IsFile() || frc.HasMultipleResources(), req, frc, 0, nil
 }
 
-func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, os.Error) {
+func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Request, Context, int, error) {
     var methods []string
     if p.allowWrite {
         methods = []string{GET, HEAD, POST, PUT, DELETE}
@@ -269,7 +269,7 @@ func (p *FileResource) AllowedMethods(req Request, cxt Context) ([]string, Reque
     return methods, req, cxt, 0, nil
 }
 
-func (p *FileResource) IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, os.Error) {
+func (p *FileResource) IsAuthorized(req Request, cxt Context) (bool, string, Request, Context, int, error) {
     method := req.Method()
     frc := cxt.(FileResourceContext)
     if method == POST || method == PUT || method == DELETE {
@@ -278,29 +278,29 @@ func (p *FileResource) IsAuthorized(req Request, cxt Context) (bool, string, Req
     return true, "", req, cxt, 0, nil
 }
 
-func (p *FileResource) Forbidden(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) Forbidden(req Request, cxt Context) (bool, Request, Context, int, error) {
     return false, req, cxt, 0, nil
 }
 
-func (p *FileResource) AllowMissingPost(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) AllowMissingPost(req Request, cxt Context) (bool, Request, Context, int, error) {
     return true, req, cxt, 0, nil
 }
 
-func (p *FileResource) MalformedRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) MalformedRequest(req Request, cxt Context) (bool, Request, Context, int, error) {
     return false, req, cxt, 0, nil
 }
 
-func (p *FileResource) URITooLong(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) URITooLong(req Request, cxt Context) (bool, Request, Context, int, error) {
     return len(req.URL().Path) > 4096, req, cxt, 0, nil
 }
 
-func (p *FileResource) DeleteResource(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) DeleteResource(req Request, cxt Context) (bool, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     if !frc.Exists() {
         return true, req, cxt, 0, nil
     }
     path := frc.FullPath()
-    var err os.Error
+    var err error
     if frc.IsFile() {
         err = os.Remove(path)
     } else if frc.IsDir() {
@@ -318,11 +318,11 @@ func (p *FileResource) DeleteCompleted(req Request, cxt Context) (bool, Request,
 }
 */
 
-func (p *FileResource) PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) PostIsCreate(req Request, cxt Context) (bool, Request, Context, int, error) {
     return true, req, cxt, 0, nil
 }
 
-func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Context, int, os.Error) {
+func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     if frc.IsDir() {
         newPath := filepath.Join(frc.FullPath(), string(rand.Int63()))
@@ -337,7 +337,7 @@ func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Co
         dir, tail := path.Split(p)
         ext := path.Ext(tail)
         basename := tail
-        uniquify := time.UTC().Format(".20060102.150405")
+        uniquify := time.Now().UTC().Format(".20060102.150405")
         if len(ext) > 0 {
             basename = tail[:len(tail)-len(ext)] + uniquify
             frc.SetFullPath(path.Join(dir, basename+ext))
@@ -356,7 +356,7 @@ func (p *FileResource) CreatePath(req Request, cxt Context) (string, Request, Co
     return frc.FullPath(), req, frc, 0, nil
 }
 
-func (p *FileResource) ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, os.Error) {
+func (p *FileResource) ProcessPost(req Request, cxt Context) (Request, Context, int, http.Header, io.WriterTo, error) {
     // TODO handle POST
     mths, req, cxt, code, err := p.ContentTypesAccepted(req, cxt)
     if len(mths) > 0 {
@@ -366,7 +366,7 @@ func (p *FileResource) ProcessPost(req Request, cxt Context) (Request, Context, 
     return req, cxt, code, nil, nil, err
 }
 
-func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, os.Error) {
+func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTypeHandler, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     var arr []MediaTypeHandler
     if frc.IsDir() {
@@ -398,7 +398,7 @@ func (p *FileResource) ContentTypesProvided(req Request, cxt Context) ([]MediaTy
     return arr, req, cxt, 0, nil
 }
 
-func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, os.Error) {
+func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTypeInputHandler, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     mediaType := req.Header().Get("Content-Type")
     if len(mediaType) == 0 {
@@ -412,8 +412,8 @@ func (p *FileResource) ContentTypesAccepted(req Request, cxt Context) ([]MediaTy
     knownContentLengthStr := req.Header().Get("Content-Length")
     knownContentLength := int64(-1)
     if len(knownContentLengthStr) > 0 {
-        var err os.Error
-        knownContentLength, err = strconv.Atoi64(knownContentLengthStr)
+        var err error
+        knownContentLength, err = strconv.ParseInt(knownContentLengthStr, 10, 64)
         if err != nil {
             knownContentLength = -1
         }
@@ -443,12 +443,12 @@ func (p *FileResource) Variances(req Request, cxt Context) ([]string, Request, C
 }
 */
 
-func (p *FileResource) IsConflict(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) IsConflict(req Request, cxt Context) (bool, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     return frc.Exists() && !frc.IsFile(), req, cxt, 0, nil
 }
 
-func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, os.Error) {
+func (p *FileResource) MultipleChoices(req Request, cxt Context) (bool, http.Header, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     if frc.HasMultipleResources() {
         headers := make(http.Header)
@@ -495,7 +495,7 @@ func (p *FileResource) MovedTemporarily(req Request, cxt Context) (string, Reque
 }
 */
 
-func (p *FileResource) LastModified(req Request, cxt Context) (*time.Time, Request, Context, int, os.Error) {
+func (p *FileResource) LastModified(req Request, cxt Context) (time.Time, Request, Context, int, error) {
     frc := cxt.(FileResourceContext)
     return frc.LastModified(), req, cxt, 0, nil
 }
@@ -511,14 +511,14 @@ func (p *FileResource) GenerateETag(req Request, cxt Context) (string, Request, 
 }
 */
 
-func (p *FileResource) FinishRequest(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) FinishRequest(req Request, cxt Context) (bool, Request, Context, int, error) {
     if frc, ok := cxt.(FileResourceContext); ok {
         frc.Close()
     }
     return true, req, cxt, 0, nil
 }
 
-func (p *FileResource) ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
+func (p *FileResource) ResponseIsRedirect(req Request, cxt Context) (bool, Request, Context, int, error) {
     return false, req, cxt, 0, nil
 }
 

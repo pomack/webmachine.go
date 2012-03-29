@@ -5,17 +5,16 @@ import (
     "io"
     "json"
     "log"
-    "path"
     "os"
+    "path"
 )
-
 
 type jsonWriter struct {
     obj interface{}
 }
 
 func newJSONWriter(obj interface{}) *jsonWriter {
-    return &jsonWriter{obj:obj}
+    return &jsonWriter{obj: obj}
 }
 
 func (p *jsonWriter) WriteTo(writer io.Writer) (n int64, err os.Error) {
@@ -31,7 +30,6 @@ func (p *jsonWriter) String() string {
     }
     return string(b)
 }
-
 
 type PassThroughMediaTypeInputHandler struct {
     mediaType           string

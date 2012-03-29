@@ -1,8 +1,8 @@
 package webmachine
 
 import (
-    "compress/gzip"
     "compress/flate"
+    "compress/gzip"
     "compress/lzw"
     "http"
     "io"

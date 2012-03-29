@@ -2,11 +2,11 @@ package main
 
 import (
     "flag"
+    "github.com/pomack/webmachine.go/webmachine"
     "http"
     "io"
     "log"
     "strconv"
-    "github.com/pomack/webmachine.go/webmachine"
 )
 
 // hello world, the web server

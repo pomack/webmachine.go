@@ -3,11 +3,11 @@ package webmachine
 import (
     "container/vector"
     "http"
-    "mime/multipart"
-    "url"
     "io"
+    "mime/multipart"
     "os"
     "time"
+    "url"
 )
 
 type Flusher interface {

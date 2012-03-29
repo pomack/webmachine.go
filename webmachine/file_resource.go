@@ -5,10 +5,10 @@ import (
     "http"
     "io"
     "log"
+    "mime"
+    "os"
     "path"
     "path/filepath"
-    "os"
-    "mime"
     "rand"
     "strconv"
     "time"
@@ -240,6 +240,7 @@ func (p *FileResource) StartRequest(req Request, cxt Context) (Request, Context)
     frc.SetFullPath(filepath.Join(p.dirPath, filepath.Clean(req.URL().Path[len(p.urlPathPrefix):])))
     return req, frc
 }
+
 /*
 func (p *FileResource) ServiceAvailable(req Request, cxt Context) (bool, Request, Context, int, os.Error) {
   return true, req, cxt, 0, nil
@@ -498,6 +499,7 @@ func (p *FileResource) LastModified(req Request, cxt Context) (*time.Time, Reque
     frc := cxt.(FileResourceContext)
     return frc.LastModified(), req, cxt, 0, nil
 }
+
 /*
 func (p *FileResource) Expires(req Request, cxt Context) (*time.Time, Request, Context, int, os.Error) {
 

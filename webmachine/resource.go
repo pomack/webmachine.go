@@ -73,7 +73,7 @@ func (p *DefaultRequestHandler) CharsetsProvided(charsets []string, req Request,
 }
 
 func (p *DefaultRequestHandler) EncodingsProvided(encodings []string, req Request, cxt Context) ([]EncodingHandler, Request, Context, int, error) {
-    return []EncodingHandler{NewIdentityEncoder(), NewDeflateEncoder(), NewGZipEncoder()}, req, cxt, 0, nil
+    return []EncodingHandler{NewIdentityEncoder(), NewDeflateEncoder()}, req, cxt, 0, nil
 }
 
 func (p *DefaultRequestHandler) Variances(req Request, cxt Context) ([]string, Request, Context, int, error) {
